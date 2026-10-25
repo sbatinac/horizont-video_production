@@ -30,7 +30,7 @@ function doPost(e) {
     const d = JSON.parse(e.postData.contents || '{}');
     if (d._vrsta === 'admin') return out(admin_(d));
     if (!d.ime || !d.email || !d.opis) return out({ ok: false, error: 'Nedostaju podaci.' });
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = ss_();
     const sh = sheet_();
     d.nr = noviBroj_(sh);
     const row = POLJA.map(p => {
@@ -68,7 +68,7 @@ function admin_(d) {
   const props = PropertiesService.getScriptProperties();
   if (d.akcija === 'podaci') {
     return { ok: true, upiti: table_(SHEET_NAME), posjete: table_(SHEET_POSJETE), postavke: postavke_(),
-      predlosci: JSON.parse(props.getProperty('predlosci') || '[]'), tablica: SpreadsheetApp.getActiveSpreadsheet().getUrl() };
+      predlosci: JSON.parse(props.getProperty('predlosci') || '[]'), tablica: ss_().getUrl() };
   }
   if (d.akcija === 'postavke') {
     const P = d.postavke || {};
@@ -97,6 +97,17 @@ function admin_(d) {
   return { ok: false, error: 'Nepoznata akcija.' };
 }
 
+// Tablica: ako je skripta napravljena iz tablice, koristi nju; inače sama napravi tablicu na Driveu i zapamti je.
+function ss_() {
+  const a = SpreadsheetApp.getActiveSpreadsheet();
+  if (a) return a;
+  const P = PropertiesService.getScriptProperties(), id = P.getProperty('ssid');
+  if (id) { try { return SpreadsheetApp.openById(id); } catch (e) {} }
+  const s = SpreadsheetApp.create('Horizont video – upiti');
+  P.setProperty('ssid', s.getId());
+  return s;
+}
+
 function postavke_() {
   try { return Object.assign({}, DEF_POSTAVKE, JSON.parse(PropertiesService.getScriptProperties().getProperty('postavke') || '{}')); }
   catch (e) { return DEF_POSTAVKE; }
@@ -104,7 +115,7 @@ function postavke_() {
 
 // ===== POMOĆNE =====
 function sheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = ss_();
   let sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) sh = ss.insertSheet(SHEET_NAME);
   if (sh.getLastRow() === 0) {
@@ -134,7 +145,7 @@ function setFields_(sh, row, fields) {
 }
 
 function table_(name) {
-  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
+  const sh = ss_().getSheetByName(name);
   if (!sh || !sh.getLastRow()) return { headers: [], rows: [] };
   const v = sh.getDataRange().getDisplayValues();
   return { headers: v[0], rows: v.slice(1) };
@@ -151,7 +162,7 @@ function hit_() {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = ss_();
     const sh = ss.getSheetByName(SHEET_POSJETE) || ss.insertSheet(SHEET_POSJETE);
     if (!sh.getLastRow()) { sh.appendRow(['Datum', 'Posjete']); sh.getRange(1, 1, 1, 2).setFontWeight('bold').setBackground(BOJA).setFontColor('#FFFFFF'); sh.setFrozenRows(1); }
     const today = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd'), last = sh.getLastRow();
@@ -179,4 +190,4 @@ function potvrda_(d) {
 function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 
 // Pokreni jednom ručno (▶ Run) da Google zatraži dozvole za tablicu i mail.
-function odobriDozvole() { sheet_(); MailApp.getRemainingDailyQuota(); }
+function odobriDozvole() { sheet_(); MailApp.getRemainingDailyQuota(); Logger.log('Tablica: ' + ss_().getUrl()); }
