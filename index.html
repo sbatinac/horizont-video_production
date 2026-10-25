@@ -272,6 +272,9 @@ section{padding-block:72px}
 @media (max-width:380px){.music .mlbl{display:none}}
 @media (prefers-reduced-motion:reduce){.mbtn.on .eq i{animation:none;height:70%}}
 
+.adm{display:inline-block;margin-left:10px;color:var(--muted);opacity:.18;text-decoration:none;font-size:.9rem;transition:opacity .2s}
+.adm:hover,.adm:focus-visible{opacity:1;color:var(--hot-text)}
+
 /* web projekti */
 .webs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 .wp{display:grid;gap:10px;align-content:start;background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px;text-decoration:none;transition:border-color .2s,transform .2s}
@@ -635,7 +638,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <footer><div class="wrap">
   <span>Horizont LHB d.o.o. · Video produkcija · Saša Batinac · 091/358 4122 · <a href="https://sbatinac.github.io/horizont-servisi/" style="color:var(--cyan)">Servis računala</a></span>
-  <span>Osobne podatke koristimo isključivo za kontakt i izvršenje usluge (GDPR).</span>
+  <span>Osobne podatke koristimo isključivo za kontakt i izvršenje usluge (GDPR). <a class="adm" href="admin.html" aria-label="Administracija" title="Administracija">⚙</a></span>
 </div></footer>
 
 <div class="modal" id="mImg" role="dialog" aria-label="Slika">
