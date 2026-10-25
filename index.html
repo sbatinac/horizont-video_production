@@ -705,7 +705,7 @@ function soon(grid, n) {
 function init(type, sec, tabsEl, grid, render, n) {
   if (FOLDERS[type].startsWith('UPISI')) return soon(grid, n);
   $(grid).innerHTML = '<div class="msg">Učitavanje…</div>';
-  load(type).then(a => a.length ? tabs($(tabsEl), a, render) : $(sec).hidden = true)
+  load(type).then(a => { if (a.length) return tabs($(tabsEl), a, render); $(sec).hidden = true; document.querySelectorAll(`#mnav a[href="${sec}"]`).forEach(l => l.hidden = true); })
     .catch(() => $(grid).innerHTML = '<div class="msg">Sadržaj se trenutno ne može učitati. Pokušajte osvježiti stranicu.</div>');
 }
 init('gallery', '#radovi', '#gTabs', '#gGrid', gRender, 8);
