@@ -42,11 +42,12 @@ function doPost(e) {
       MailApp.sendEmail({
         to: NOTIFY_EMAIL, replyTo: d.email,
         subject: 'Novi upit ' + d.nr + ': ' + (d.firma || d.ime) + ' – ' + (d.usluge || 'video'),
+        name: 'Horizont video – web', htmlBody: obavijest_(d, ss.getUrl()),
         body: POLJA.filter(p => d[p[0]]).map(p => p[1] + ': ' + d[p[0]]).join('\n') + '\n\nOdgovori direktno na ovaj mail (ide klijentu).\nAdmin: ' + WEB + 'admin.html\nTablica: ' + ss.getUrl()
       });
     } catch (err) { console.warn(err); }
     try {
-      MailApp.sendEmail({ to: d.email, name: NAZIV, replyTo: NOTIFY_EMAIL, subject: 'Primili smo Vaš upit ' + d.nr, htmlBody: potvrda_(d) });
+      MailApp.sendEmail({ to: d.email, name: NAZIV, replyTo: NOTIFY_EMAIL, subject: 'Primili smo Vaš upit ' + d.nr + ' – Horizont video produkcija', htmlBody: potvrda_(d), body: 'Hvala! Zaprimili smo Vaš upit ' + d.nr + '. Javljamo se uskoro. ' + TEL });
     } catch (err) { console.warn(err); }
     return out({ ok: true, nr: d.nr });
   } catch (err) {
@@ -200,19 +201,86 @@ function hit_() {
   } finally { lock.releaseLock(); }
 }
 
+// ===== E-MAIL PREDLOŠCI (tablični HTML, radi u Gmailu, Outlooku i na mobitelu) =====
+const MAIL_HEADER = WEB + 'mail-header.jpg';
+const WA = '385913584122';
+function esc_(s) { return String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function intl_(t) { const d = String(t || '').replace(/\D/g, ''); return d.startsWith('385') ? d : d.startsWith('0') ? '385' + d.slice(1) : d; }
+function hrDatum_(v) { const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? (+m[3]) + '. ' + (+m[2]) + '. ' + m[1] + '.' : (v || ''); }
+function btn_(href, txt, bg, fg) {
+  return `<td style="padding:4px"><a href="${href}" style="display:inline-block;background:${bg};color:${fg};font:bold 14px Arial,sans-serif;text-decoration:none;padding:12px 18px;border-radius:8px">${txt}</a></td>`;
+}
+function okvir_(naslov, sadrzaj, podnozje) {
+  return `<!doctype html><html lang="hr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc_(naslov)}</title></head>
+<body style="margin:0;padding:0;background:#EEF2F9">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EEF2F9"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#FFFFFF;border-radius:14px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#0B1424">
+<tr><td style="background:#040A18;line-height:0"><a href="${WEB}"><img src="${MAIL_HEADER}" width="600" alt="Horizont LHB d.o.o. – video produkcija" style="display:block;width:100%;max-width:600px;height:auto;border:0"></a></td></tr>
+<tr><td style="height:4px;line-height:4px;font-size:0;background:#1E6BFF;background-image:linear-gradient(90deg,#1E6BFF,#4FA3FF 42%,#FFD27A 58%,#FF9500)">&nbsp;</td></tr>
+${sadrzaj}
+<tr><td style="background:#040A18;padding:22px 28px;color:#9AA8C2;font-size:12px;line-height:1.6">
+<b style="color:#FFFFFF;font-size:13px">Horizont LHB d.o.o.</b> <span style="color:#FFC94D">· video produkcija</span><br>
+${TEL} · <a href="${WEB}" style="color:#8FC2FF;text-decoration:none">${WEB.replace('https://', '')}</a><br>
+${podnozje || 'Ovaj mail je automatska potvrda. Slobodno odgovorite na njega, poruka stiže izravno nama.'}
+</td></tr></table></td></tr></table></body></html>`;
+}
+
+// Potvrda klijentu nakon upita
 function potvrda_(d) {
-  const e = s => String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const ime = (d.ime || '').split(' ')[0];
-  const rows = [['Broj upita', d.nr], ['Usluge', d.usluge], ['Kontakt', d.kontakt_nacin], ['Kada', d.kontakt_kada], ['Rok', d.rok]]
-    .filter(r => r[1]).map(r => `<tr><td style="padding:6px 14px 6px 0;color:#56627A">${e(r[0])}</td><td style="padding:6px 0"><b>${e(r[1])}</b></td></tr>`).join('');
-  return `<div style="font-family:Arial,sans-serif;max-width:560px;color:#0B1424">
-    <div style="height:4px;background:linear-gradient(90deg,#1E6BFF,#FFC23D,#FF9500)"></div>
-    <h2 style="margin:22px 0 8px">Hvala${ime ? ', ' + e(ime) : ''}!</h2>
-    <p>Zaprimili smo Vaš upit i javljamo se odabranim kanalom s prijedlogom i ponudom.</p>
-    <table style="border-collapse:collapse;margin:14px 0">${rows}</table>
-    <p>Za brži dogovor: <b>${TEL}</b> (poziv, WhatsApp, Viber).</p>
-    <p style="color:#56627A;font-size:13px;margin-top:26px">${NAZIV}<br><a href="${WEB}" style="color:#1559E0">${WEB}</a></p>
-  </div>`;
+  const red = (k, v) => v ? `<tr><td style="padding:9px 14px;color:#56627A;font-size:13px;border-bottom:1px solid #E3E9F3;width:38%">${esc_(k)}</td><td style="padding:9px 14px;font-size:14px;border-bottom:1px solid #E3E9F3"><b>${esc_(v)}</b></td></tr>` : '';
+  const korak = (n, t, s) => `<tr><td width="44" valign="top" style="padding:0 0 14px"><div style="width:32px;height:32px;line-height:32px;border-radius:50%;background:#FFB020;color:#0A1630;font-weight:bold;text-align:center;font-size:14px">${n}</div></td><td valign="top" style="padding:3px 0 14px;font-size:14px;line-height:1.5"><b>${t}</b><br><span style="color:#56627A">${s}</span></td></tr>`;
+  const sadrzaj = `
+<tr><td style="padding:30px 28px 6px">
+  <p style="margin:0 0 6px;font:bold 11px monospace;letter-spacing:2px;color:#A85F00;text-transform:uppercase">Upit zaprimljen · ${esc_(d.nr)}</p>
+  <h1 style="margin:0 0 12px;font-size:26px;line-height:1.2;color:#0B1424">Hvala${ime ? ', ' + esc_(ime) : ''}!</h1>
+  <p style="margin:0;font-size:15px;line-height:1.6;color:#33405A">Zaprimili smo Vaš upit. Pregledat ćemo ga i javiti Vam se ${d.kontakt_nacin ? 'putem: <b>' + esc_(d.kontakt_nacin) + '</b>,' : 'odabranim kanalom'} s idejom, prijedlogom i točnom cijenom.</p>
+</td></tr>
+<tr><td style="padding:20px 28px 4px">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E3E9F3;border-radius:10px;overflow:hidden;background:#F7F9FD">
+    ${red('Broj upita', d.nr)}${red(d.firma ? 'Firma' : '', d.firma)}${red('Usluge', d.usluge)}${red('Gdje se koristi', d.kanali)}${red('Rok', hrDatum_(d.rok))}${red('Kontakt', d.kontakt_nacin)}${red('Kada Vam odgovara', d.kontakt_kada)}
+  </table>
+</td></tr>
+<tr><td style="padding:24px 28px 6px">
+  <p style="margin:0 0 14px;font-size:17px;font-weight:bold">Što slijedi</p>
+  <table role="presentation" cellpadding="0" cellspacing="0">
+    ${korak(1, 'Pregled upita', 'Proučimo što trebate i javimo se, ako treba, s pitanjem ili dvije.')}
+    ${korak(2, 'Ideja i ponuda', 'Dobivate prijedlog, primjere i točnu cijenu prije početka.')}
+    ${korak(3, 'Produkcija i isporuka', 'Snimamo, montiramo i isporučujemo u svim formatima koji Vam trebaju.')}
+  </table>
+</td></tr>
+<tr><td style="padding:10px 24px 30px">
+  <p style="margin:0 0 10px 4px;font-size:14px;color:#33405A">Želite brži dogovor? Javite nam se izravno:</p>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+    ${btn_('https://wa.me/' + WA + '?text=' + encodeURIComponent('Pozdrav, šaljem upit ' + d.nr + '.'), 'WhatsApp', '#1E6BFF', '#FFFFFF')}
+    ${btn_('tel:+' + WA, 'Nazovite', '#FFB020', '#0A1630')}
+    ${btn_(WEB + '#radovi', 'Naši radovi', '#EEF2F9', '#0B1424')}
+  </tr></table>
+</td></tr>`;
+  return okvir_('Primili smo Vaš upit ' + d.nr, sadrzaj);
+}
+
+// Obavijest tebi o novom upitu
+function obavijest_(d, tablicaUrl) {
+  const red = (k, v) => v ? `<tr><td style="padding:7px 12px;color:#56627A;font-size:13px;border-bottom:1px solid #E3E9F3;width:36%;vertical-align:top">${esc_(k)}</td><td style="padding:7px 12px;font-size:14px;border-bottom:1px solid #E3E9F3">${esc_(v)}</td></tr>` : '';
+  const tel = intl_(d.telefon);
+  const sadrzaj = `
+<tr><td style="padding:26px 28px 4px">
+  <p style="margin:0 0 6px;font:bold 11px monospace;letter-spacing:2px;color:#1559E0;text-transform:uppercase">Novi upit · ${esc_(d.nr)}</p>
+  <h1 style="margin:0 0 6px;font-size:24px;line-height:1.2">${esc_(d.firma || d.ime)}</h1>
+  <p style="margin:0;font-size:14px;color:#56627A">${esc_(d.tip || '')}${d.usluge ? ' · ' + esc_(d.usluge) : ''}</p>
+</td></tr>
+<tr><td style="padding:16px 24px 4px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+  ${btn_(WEB + 'admin.html', 'Otvori admin', '#FFB020', '#0A1630')}
+  ${tel ? btn_('https://wa.me/' + tel, 'WhatsApp', '#1E6BFF', '#FFFFFF') + btn_('tel:+' + tel, 'Nazovi', '#EEF2F9', '#0B1424') : ''}
+</tr></table></td></tr>
+<tr><td style="padding:14px 28px 28px">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E3E9F3;border-radius:10px;overflow:hidden">
+    ${POLJA.filter(p => p[0] !== 'nr').map(p => red(p[1], p[0] === 'rok' ? hrDatum_(d[p[0]]) : d[p[0]])).join('')}
+  </table>
+  <p style="margin:14px 0 0;font-size:13px;color:#56627A">Odgovor na ovaj mail ide izravno klijentu. <a href="${tablicaUrl}" style="color:#1559E0">Otvori tablicu</a></p>
+</td></tr>`;
+  return okvir_('Novi upit ' + d.nr, sadrzaj, 'Obavijest s web stranice. Klijent je dobio automatsku potvrdu.');
 }
 
 function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
