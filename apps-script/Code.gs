@@ -11,6 +11,7 @@ const SHEET_POSJETE = 'Posjete';
 const NAZIV = 'Horizont LHB d.o.o. – video produkcija';
 const TEL = '091/358 4122';
 const WEB = 'https://sbatinac.github.io/horizont-video_production/';
+const LINK = 'https://batinac.com/video-produkcija'; // kratki link koji se prikazuje klijentima
 const TZ = 'Europe/Zagreb';
 const BOJA = '#0B1E44';
 const TG_TOKEN = ''; // može ostati prazno: token se upisuje u adminu (⚙ Postavke → Telegram)
@@ -49,7 +50,7 @@ function doPost(e) {
     } catch (err) { console.warn(err); }
     try { tgNovo_(d); } catch (err) { console.warn(err); }
     try {
-      MailApp.sendEmail({ to: d.email, name: NAZIV, replyTo: NOTIFY_EMAIL, subject: 'Primili smo Vaš upit ' + d.nr + ' – Horizont video produkcija', htmlBody: potvrda_(d), body: 'Hvala! Zaprimili smo Vaš upit ' + d.nr + '. Javljamo se uskoro. ' + TEL });
+      MailApp.sendEmail({ to: d.email, name: NAZIV, replyTo: NOTIFY_EMAIL, subject: 'Primili smo Vaš upit ' + d.nr + ' – Horizont video produkcija', htmlBody: potvrda_(d), body: 'Hvala! Zaprimili smo Vaš upit ' + d.nr + '. Javljamo se uskoro. ' + TEL + ' · ' + LINK });
     } catch (err) { console.warn(err); }
     return out({ ok: true, nr: d.nr });
   } catch (err) {
@@ -292,12 +293,12 @@ function okvir_(naslov, sadrzaj, podnozje) {
 <body style="margin:0;padding:0;background:#EEF2F9">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EEF2F9"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#FFFFFF;border-radius:14px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#0B1424">
-<tr><td style="background:#040A18;line-height:0"><a href="${WEB}"><img src="${MAIL_HEADER}" width="600" alt="Horizont LHB d.o.o. – video produkcija" style="display:block;width:100%;max-width:600px;height:auto;border:0"></a></td></tr>
+<tr><td style="background:#040A18;line-height:0"><a href="${LINK}"><img src="${MAIL_HEADER}" width="600" alt="Horizont LHB d.o.o. – video produkcija" style="display:block;width:100%;max-width:600px;height:auto;border:0"></a></td></tr>
 <tr><td style="height:4px;line-height:4px;font-size:0;background:#1E6BFF;background-image:linear-gradient(90deg,#1E6BFF,#4FA3FF 42%,#FFD27A 58%,#FF9500)">&nbsp;</td></tr>
 ${sadrzaj}
 <tr><td style="background:#040A18;padding:22px 28px;color:#9AA8C2;font-size:12px;line-height:1.6">
 <b style="color:#FFFFFF;font-size:13px">Horizont LHB d.o.o.</b> <span style="color:#FFC94D">· video produkcija</span><br>
-${TEL} · <a href="${WEB}" style="color:#8FC2FF;text-decoration:none">${WEB.replace('https://', '')}</a><br>
+${TEL} · <a href="${LINK}" style="color:#8FC2FF;text-decoration:none">${LINK.replace('https://', '')}</a><br>
 ${podnozje || 'Ovaj mail je automatska potvrda. Slobodno odgovorite na njega, poruka stiže izravno nama.'}
 </td></tr></table></td></tr></table></body></html>`;
 }
@@ -331,7 +332,7 @@ function potvrda_(d) {
   <table role="presentation" cellpadding="0" cellspacing="0"><tr>
     ${btn_('https://wa.me/' + WA + '?text=' + encodeURIComponent('Pozdrav, šaljem upit ' + d.nr + '.'), 'WhatsApp', '#1E6BFF', '#FFFFFF')}
     ${btn_('tel:+' + WA, 'Nazovite', '#FFB020', '#0A1630')}
-    ${btn_(WEB + '#radovi', 'Naši radovi', '#EEF2F9', '#0B1424')}
+    ${btn_(LINK, 'Naši radovi', '#EEF2F9', '#0B1424')}
   </tr></table>
 </td></tr>`;
   return okvir_('Primili smo Vaš upit ' + d.nr, sadrzaj);
