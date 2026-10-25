@@ -61,10 +61,14 @@ nav a{text-decoration:none;color:var(--muted)} nav a:hover{color:var(--ink)}
 .burger[aria-expanded="true"] span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
 
 /* banner: intro video */
-.banner{background:#000;position:relative;line-height:0;display:flex;justify-content:center}
-.banner{padding:clamp(14px,2.5vw,32px) 0 clamp(52px,5vw,64px)}
-.banner video{display:block;width:min(1100px,92vw);height:auto;aspect-ratio:1920/1070;max-height:68vh;object-fit:contain;background:#000;border-radius:12px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 30px 80px -30px rgba(30,107,255,.6)}
-.banner::after{content:none}
+.banner{background:#020611;position:relative;line-height:0;display:flex;justify-content:center;overflow:hidden;isolation:isolate}
+/* ambijentalni odsjaj: zamućena kopija trenutne slike videa preko cijele širine */
+.banner .amb{position:absolute;inset:-12%;width:124%;height:124%;z-index:-1;filter:blur(48px) saturate(1.5) brightness(.85);transform:translateZ(0);opacity:.95}
+.banner::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse 70% 90% at 50% 50%,transparent 40%,rgba(2,6,17,.55) 100%)}
+.banner::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--split);z-index:1}
+.banner video{display:block;width:100%;max-width:calc(min(86vh,1070px) * 1920 / 1070);height:auto;aspect-ratio:1920/1070;object-fit:cover;background:transparent;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%)}
+@media (max-width:1100px){.banner video{-webkit-mask-image:none;mask-image:none}}
 .vctl{position:absolute;right:max(16px,env(safe-area-inset-right,0px));bottom:18px;z-index:2;display:flex;gap:8px;line-height:1}
 .vbtn{background:rgba(4,10,24,.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid #34466B;color:#F2F6FF;font:600 .85rem var(--body);padding:8px 14px;border-radius:999px;cursor:pointer}
 .vbtn:hover{border-color:#FFC23D;color:#FFC23D}
@@ -278,8 +282,20 @@ section{padding-block:72px}
 
 /* web projekti */
 .webs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-.wp{display:grid;gap:10px;align-content:start;background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px;text-decoration:none;transition:border-color .2s,transform .2s}
-.wp:hover{border-color:var(--cyan);transform:translateY(-3px)}
+.wp{display:grid;align-content:start;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;text-decoration:none;transition:border-color .2s,transform .2s,box-shadow .2s}
+.wp:hover{box-shadow:0 24px 50px -28px rgba(30,107,255,.45)}
+.wp{grid-template-columns:minmax(0,1fr);min-width:0}
+.wp-b{display:grid;gap:10px;padding:18px 22px 22px;min-width:0}
+.webs{grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr))!important}
+.wp-prev{display:block;position:relative;background:#0B1424}
+.wp-bar{display:flex;align-items:center;gap:6px;padding:8px 12px;background:#0E1A33;color:#9AA8C2;font:500 .7rem var(--mono)}
+.wp-bar i{width:9px;height:9px;border-radius:50%;background:#34466B}.wp-bar i:first-child{background:#FF5F57}.wp-bar i:nth-child(2){background:#FEBC2E}.wp-bar i:nth-child(3){background:#28C840}
+.wp-bar em{font-style:normal;margin-left:8px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#16264A;padding:3px 8px;border-radius:5px}
+.wp-bar b{color:#4ADE80;font-weight:500;white-space:nowrap}
+.wp-vp{display:block;position:relative;aspect-ratio:16/10;overflow:hidden;background:#fff}
+.wp-vp iframe{position:absolute;top:0;left:0;width:1280px;height:800px;border:0;transform-origin:0 0;pointer-events:none;background:#fff}
+.wp-vp::after{content:"";position:absolute;inset:0}
+.wp:hover{border-color:var(--hot);transform:translateY(-3px)}
 .wp .url{font:500 .78rem var(--mono);color:var(--cyan);overflow-wrap:anywhere}
 .wp p{color:var(--muted);font-size:.93rem}
 .wp .go{font-weight:600;color:var(--hot-text);margin-top:4px}
@@ -368,7 +384,6 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   section{padding-block:52px}
   .vbtn{padding:6px 11px;font-size:.78rem}
   .vctl{position:static;justify-content:center;padding:10px 0 14px}
-  .banner{padding-bottom:0}
   .banner{flex-direction:column;align-items:center}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}html{scroll-behavior:auto}}
@@ -390,6 +405,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 </div></header>
 
 <div class="banner">
+  <canvas class="amb" id="amb" width="48" height="27" aria-hidden="true"></canvas>
   <video id="intro" src="intro.mp4" poster="intro-poster.webp" muted playsinline preload="auto" width="1920" height="1070" aria-label="Animirani uvod Horizont LHB d.o.o. – video produkcija: grad u sumrak, filmska vrpca oko slova H i natpis"></video>
   <div class="vctl">
     <button type="button" class="vbtn" id="vSound" aria-pressed="false">🔊 Uključi zvuk</button>
@@ -482,18 +498,24 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <div class="sec-head"><span class="lbl">Web</span><h2>Web stranice koje smo napravili</h2><p>Kliknite i pogledajte uživo.</p></div>
   <div class="webs">
     <a class="wp" href="https://sbatinac.github.io/horizont-servisi/" target="_blank" rel="noopener">
+      <span class="wp-prev" aria-hidden="true"><span class="wp-bar"><i></i><i></i><i></i><em>sbatinac.github.io/horizont-servisi</em><b>● uživo</b></span><span class="wp-vp"><iframe data-src="https://sbatinac.github.io/horizont-servisi/" title="Pregled stranice sbatinac.github.io/horizont-servisi" tabindex="-1" loading="lazy" sandbox="allow-scripts allow-same-origin"></iframe></span></span>
+      <span class="wp-b">
       <span class="lbl">Servis računala</span>
       <h3>Horizont LHB – servisi</h3>
       <span class="url">sbatinac.github.io/horizont-servisi</span>
       <p>Galerija iz Google Drivea, online servisni nalog, provjera statusa, rabljeni dijelovi i administracija.</p>
       <span class="go">Otvori stranicu ↗</span>
+      </span>
     </a>
     <a class="wp" href="https://sbatinac.github.io/koncept-zdravlje/" target="_blank" rel="noopener">
+      <span class="wp-prev" aria-hidden="true"><span class="wp-bar"><i></i><i></i><i></i><em>sbatinac.github.io/koncept-zdravlje</em><b>● uživo</b></span><span class="wp-vp"><iframe data-src="https://sbatinac.github.io/koncept-zdravlje/" title="Pregled stranice sbatinac.github.io/koncept-zdravlje" tabindex="-1" loading="lazy" sandbox="allow-scripts allow-same-origin"></iframe></span></span>
+      <span class="wp-b">
       <span class="lbl">Zdravlje i edukacija</span>
       <h3>Koncept Zdravlje</h3>
       <span class="url">sbatinac.github.io/koncept-zdravlje</span>
       <p>Stranica za predavanja i savjetovanje iz farmacije i nutricionizma: galerija slika, videa i PDF-ova s Google Drivea, kontakt forma i glazba.</p>
       <span class="go">Otvori stranicu ↗</span>
+      </span>
     </a>
   </div>
 </div></section>
@@ -832,6 +854,17 @@ init('pdf', '#dokumenti', '#pTabs', '#pGrid', pRender, 4);
 </script>
 
 <script>
+/* AMBIJENT: svaki kadar videa umanjen na 48×27 px i zamućen preko cijele širine (kao ambilight) */
+(() => {
+  const c = document.getElementById('amb'), v = document.getElementById('intro'); if (!c || !v) return;
+  const x = c.getContext('2d'); let last = 0;
+  const draw = () => { try { x.drawImage(v, 0, 0, c.width, c.height); } catch (e) {} };
+  const loop = t => { if (t - last > 66) { draw(); last = t; } if (!v.paused && !v.ended) requestAnimationFrame(loop); };
+  v.addEventListener('play', () => requestAnimationFrame(loop));
+  ['loadeddata', 'seeked', 'pause', 'ended'].forEach(ev => v.addEventListener(ev, draw));
+  const p = new Image(); p.onload = () => { if (v.readyState < 2) x.drawImage(p, 0, 0, c.width, c.height); }; p.src = v.poster;
+})();
+
 /* INTRO VIDEO: pokreće se bez zvuka, staje na zadnjem kadru (logo) */
 const intro = document.getElementById('intro');
 function pauseIntro() { if (intro && !intro.paused) intro.pause(); }
@@ -942,6 +975,17 @@ function pauseIntro() { if (intro && !intro.paused) intro.pause(); }
 /* BROJAČ POSJETA: jednom po sesiji */
 (() => { try { if (sessionStorage.getItem('hzv_hit')) return; sessionStorage.setItem('hzv_hit', '1'); } catch (e) {}
   if (!ENDPOINT.startsWith('UPISI')) fetch(ENDPOINT + '?a=hit', { mode: 'no-cors' }).catch(() => {}); })();
+
+/* ŽIVI PRIKAZ STRANICA: umanjena prava stranica, učitava se tek kad je kartica blizu ekrana */
+(() => {
+  const vps = [...document.querySelectorAll('.wp-vp')]; if (!vps.length) return;
+  const fit = vp => { const f = vp.querySelector('iframe'); f.style.transform = 'scale(' + (vp.clientWidth / 1280) + ')'; };
+  const ro = 'ResizeObserver' in window ? new ResizeObserver(es => es.forEach(e => fit(e.target))) : null;
+  const load = vp => { const f = vp.querySelector('iframe'); if (!f.src) f.src = f.dataset.src; fit(vp); ro && ro.observe(vp); };
+  if ('IntersectionObserver' in window) { const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { load(e.target); io.unobserve(e.target); } }), { rootMargin: '300px' }); vps.forEach(v => io.observe(v)); }
+  else vps.forEach(load);
+  addEventListener('resize', () => vps.forEach(fit));
+})();
 
 /* KONTAKT + PODIJELI */
 (() => {
