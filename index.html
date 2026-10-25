@@ -238,6 +238,17 @@ section{padding-block:72px}
 @media (max-width:700px){.d-kam{display:none}}
 @media (prefers-reduced-motion:reduce){.deco{animation:none}}
 
+
+/* STUDIO: montažer preko cijele širine */
+.studio{position:relative;padding:clamp(40px,6vw,80px) 0 0;overflow:clip;background:radial-gradient(ellipse 60% 70% at 62% 60%,rgba(255,46,110,.10),transparent 70%),radial-gradient(ellipse 40% 50% at 85% 40%,rgba(10,140,153,.10),transparent 70%)}
+.st-img{display:block;width:100%;max-width:1600px;height:auto;margin:0 auto;position:relative;z-index:0;-webkit-mask-image:linear-gradient(#000 82%,transparent);mask-image:linear-gradient(#000 82%,transparent);filter:drop-shadow(0 30px 50px rgba(23,10,26,.18))}
+.st-txt{position:absolute;left:0;right:0;top:clamp(40px,6vw,80px);z-index:1;pointer-events:none}
+.st-txt>div{max-width:min(30ch,26vw);display:grid;gap:12px;pointer-events:auto}
+@media (min-width:901px){.st-img{width:86%;max-width:1400px;margin-right:0;margin-left:auto}}
+.st-txt h2{font-size:clamp(1.6rem,3vw,2.6rem)}
+.st-txt p{color:var(--muted)}
+@media (max-width:900px){.st-txt{position:static}.st-txt>div{max-width:none;margin-bottom:12px}.st-img{width:125%;max-width:none;margin-left:-6%}}
+
 /* web projekti */
 .webs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 .wp{display:grid;gap:10px;align-content:start;background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px;text-decoration:none;transition:border-color .2s,transform .2s}
@@ -453,6 +464,15 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div class="step"><h3>Isporuka</h3><p>Gotovi videi u svim formatima, spremni za objavu.</p></div>
   </div>
 </div></section>
+
+<section class="studio" aria-labelledby="studioT">
+  <div class="st-txt wrap"><div>
+    <span class="lbl">Studio</span>
+    <h2 id="studioT">Svaki kadar prolazi <span class="gt">kroz naše ruke.</span></h2>
+    <p>Montaža, boje, zvuk i grafika rade se u našem studiju, od prvog reza do gotovog videa.</p>
+  </div></div>
+  <img class="st-img" src="studio.webp" alt="Montažer sa slušalicama za radnim stolom s dva monitora na kojima je otvorena montaža videa" width="2000" height="878" loading="lazy" decoding="async">
+</section>
 
 <section id="ponuda" class="has-deco"><img class="deco d-kla" src="deco-klapa.webp" alt="" aria-hidden="true" loading="lazy" decoding="async"><img class="deco d-mix" src="deco-mikseta.webp" alt="" aria-hidden="true" loading="lazy" decoding="async"><div class="wrap">
   <div class="sec-head"><span class="lbl">Ponuda</span><h2>Zatražite ponudu</h2><p>Ispunite kratki upit. Javljamo se s idejom i cijenom.</p></div>
