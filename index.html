@@ -590,7 +590,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           <label class="chip"><input type="radio" name="budzet" value="Ne znam još"><span>Ne znam još</span></label>
         </div>
       </fieldset>
-      <div class="fld"><label for="f_rok">Željeni rok</label><input type="date" id="f_rok"></div>
+      <div class="fld" id="fs_rok"><label for="f_rok">Do kada Vam je potreban video?<span class="rq">*</span></label><input type="date" id="f_rok"><label class="chk" style="font-weight:500;font-size:.9rem;margin-top:4px"><input type="checkbox" id="f_bezroka"><span>Nemam fiksan rok</span></label><p class="err" role="alert"></p></div>
     </div>
     <div class="fld"><label for="f_opis">Opišite projekt<span class="rq">*</span></label><textarea id="f_opis" rows="5" placeholder="Npr. video od 30 s za Instagram, predstavljamo novi proizvod, imamo svoje fotografije…"></textarea><p class="err" role="alert"></p></div>
     <div class="fld"><label class="chk"><input type="checkbox" id="f_gdpr"><span>Slažem se da se moji podaci koriste isključivo za odgovor na ovaj upit (GDPR).<span class="rq">*</span></span></label><p class="err" role="alert"></p></div>
@@ -870,6 +870,8 @@ function pauseIntro() { if (intro && !intro.paused) intro.pause(); }
     g('telRq').hidden = samoMail();
   };
   f.addEventListener('change', sync);
+  g('f_rok').min = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+  g('f_bezroka').addEventListener('change', e => { g('f_rok').disabled = e.target.checked; if (e.target.checked) g('f_rok').value = ''; });
   g('f_oib').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 11); });
   f.addEventListener('submit', async e => {
     e.preventDefault();
@@ -884,6 +886,7 @@ function pauseIntro() { if (intro && !intro.paused) intro.pause(); }
       mark(g('f_tel'), samoMail() || v('f_tel').replace(/\D/g, '').length >= 8 ? '' : 'Upišite cijeli broj mobitela.'),
       mark(g('fs_kanal'), checked('kanal').length ? '' : 'Odaberite barem jedan način.'),
       mark(g('fs_kada'), checked('kada').length ? '' : 'Odaberite kada Vam odgovara.'),
+      mark(g('f_rok'), g('f_bezroka').checked || (v('f_rok') && v('f_rok') >= new Date(Date.now() + 864e5).toISOString().slice(0, 10)) ? '' : (v('f_rok') ? 'Odaberite datum od sutra nadalje.' : 'Upišite krajnji rok ili označite „Nemam fiksan rok”.')),
       mark(g('fs_usluge'), checked('usluge').length ? '' : 'Odaberite barem jednu stavku.'),
       mark(g('f_opis'), v('f_opis') ? '' : 'Napišite par rečenica o projektu.'),
       mark(g('f_gdpr'), g('f_gdpr').checked ? '' : 'Potrebna je privola za obradu podataka.')
@@ -895,10 +898,10 @@ function pauseIntro() { if (intro && !intro.paused) intro.pause(); }
       const r = await fetch(ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({
         vrijeme: new Date().toLocaleString('hr-HR'), tip: tip(), firma: P ? v('f_firma') : '', oib: P ? v('f_oib') : '', ime: v('f_ime'), email: v('f_email'), telefon: v('f_tel'), grad: v('f_grad'),
         kontakt_nacin: checked('kanal').join(', '), kontakt_kada: checked('kada').join(', '),
-        usluge: checked('usluge').join(', '), kanali: checked('kanali').join(', '), budzet: checked('budzet').join(''), rok: v('f_rok'), opis: v('f_opis') }) });
+        usluge: checked('usluge').join(', '), kanali: checked('kanali').join(', '), budzet: checked('budzet').join(''), rok: g('f_bezroka').checked ? 'Nemam fiksan rok' : v('f_rok'), opis: v('f_opis') }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || j.ok === false) throw new Error();
-      f.reset(); sync(); msg.className = 'wz-msg ok'; msg.textContent = 'Hvala! Upit' + (j.nr ? ' ' + j.nr : '') + ' je poslan. Potvrda stiže na Vaš e-mail, a javljamo se odabranim kanalom.';
+      f.reset(); g('f_rok').disabled = false; sync(); msg.className = 'wz-msg ok'; msg.textContent = 'Hvala! Upit' + (j.nr ? ' ' + j.nr : '') + ' je poslan. Potvrda stiže na Vaš e-mail, a javljamo se odabranim kanalom.';
     } catch (e) { msg.className = 'wz-msg bad'; msg.textContent = 'Slanje nije uspjelo. Pokušajte ponovno ili nazovite 091/358 4122.'; }
     btn.disabled = false; btn.textContent = 'Pošalji upit →';
   });

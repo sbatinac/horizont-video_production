@@ -87,10 +87,17 @@ function admin_(d) {
     setFields_(sh, row, d.polja || {});
     return { ok: true };
   }
+  if (d.akcija === 'kalendar') {
+    const sh = sheet_(), row = rowByNr_(sh, d.nr);
+    if (!row) return { ok: false, error: 'Upit ' + d.nr + ' nije pronađen.' };
+    const id = kalendar_(sh, row, d);
+    return { ok: true, id: id };
+  }
   if (d.akcija === 'brisi') {
     const sh = sheet_(), row = rowByNr_(sh, d.nr);
     if (!row) return { ok: false, error: 'Upit nije pronađen.' };
     if (d.lozinka !== ADMIN_KEY) { Utilities.sleep(800); return { ok: false, error: 'Pogrešna lozinka za potvrdu.' }; }
+    brisiDogadaj_(cell_(sh, row, 'Kalendar ID'));
     sh.deleteRow(row);
     return { ok: true };
   }
@@ -106,6 +113,27 @@ function ss_() {
   const s = SpreadsheetApp.create('Horizont video – upiti');
   P.setProperty('ssid', s.getId());
   return s;
+}
+
+// ===== KALENDAR (zadani kalendar računa na kojem radi skripta, kao kod servisa) =====
+function cell_(sh, row, name) { const H = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0], i = H.indexOf(name); return i > -1 ? sh.getRange(row, i + 1).getDisplayValue() : ''; }
+function brisiDogadaj_(id) { if (!id) return; try { const ev = CalendarApp.getDefaultCalendar().getEventById(id); if (ev) ev.deleteEvent(); } catch (e) {} }
+function kalendar_(sh, row, d) {
+  const cal = CalendarApp.getDefaultCalendar(), staro = cell_(sh, row, 'Kalendar ID');
+  if (d.brisi) { brisiDogadaj_(staro); setFields_(sh, row, { 'Kalendar ID': '', 'Rok isporuke': '' }); return ''; }
+  const m = String(d.datum || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) throw new Error('Neispravan datum roka.');
+  const dan = new Date(+m[1], +m[2] - 1, +m[3]);
+  const title = '🎬 Rok: ' + d.nr + ' – ' + (d.klijent || 'klijent') + (d.projekt ? ' – ' + d.projekt : '');
+  const desc = [d.projekt ? 'Projekt: ' + d.projekt : '', d.usluge ? 'Usluge: ' + d.usluge : '', d.kontakt ? 'Kontakt: ' + d.kontakt : '', d.opis ? '\n' + d.opis : '', '\nAdmin: ' + WEB + 'admin.html'].filter(Boolean).join('\n');
+  let ev = null;
+  if (staro) { try { ev = cal.getEventById(staro); } catch (e) {} }
+  if (ev) { ev.setTitle(title); ev.setDescription(desc); ev.setAllDayDate(dan); }
+  else ev = cal.createAllDayEvent(title, dan, { description: desc });
+  try { ev.removeAllReminders(); ev.addPopupReminder(3 * 24 * 60); ev.addPopupReminder(24 * 60); ev.addEmailReminder(24 * 60); } catch (e) {}
+  try { ev.setColor(CalendarApp.EventColor.BLUE); } catch (e) {}
+  setFields_(sh, row, { 'Kalendar ID': ev.getId(), 'Rok isporuke': Utilities.formatDate(dan, TZ, 'yyyy-MM-dd') });
+  return ev.getId();
 }
 
 function postavke_() {
@@ -190,4 +218,4 @@ function potvrda_(d) {
 function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 
 // Pokreni jednom ručno (▶ Run) da Google zatraži dozvole za tablicu i mail.
-function odobriDozvole() { sheet_(); MailApp.getRemainingDailyQuota(); Logger.log('Tablica: ' + ss_().getUrl()); }
+function odobriDozvole() { sheet_(); MailApp.getRemainingDailyQuota(); CalendarApp.getDefaultCalendar().getName(); Logger.log('Tablica: ' + ss_().getUrl()); }

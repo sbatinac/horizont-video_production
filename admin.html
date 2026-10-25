@@ -217,6 +217,17 @@ dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;overflow-wrap:anywhere}
   <div class="dr-b" id="drB"></div>
 </aside>
 
+<div class="modal" id="calM" hidden role="dialog" aria-labelledby="calT">
+  <div class="box">
+    <h2 id="calT" style="font-size:1.2rem">Otvori nalog</h2>
+    <p class="note" id="calInfo" style="margin:0"></p>
+    <label class="f">Rok isporuke<input type="date" id="cDat"></label>
+    <label class="chk"><input type="checkbox" id="cCal" checked> Upiši rok u Google kalendar (podsjetnik 3 dana i 1 dan prije)</label>
+    <div class="acts"><button type="button" class="btn" id="cOk">Potvrdi</button><button type="button" class="btn ghost" id="cCancel">Odustani</button></div>
+    <p class="msg" id="cMsg"></p>
+  </div>
+</div>
+
 <div class="modal" id="setM" hidden role="dialog" aria-labelledby="setT">
   <div class="box">
     <h2 id="setT" style="font-size:1.2rem">Postavke obračuna</h2>
@@ -361,7 +372,7 @@ function renderList() {
     return `<button type="button" class="it" data-nr="${esc(o['Broj upita'])}">
       <span class="nrw"><span class="nr">${esc(o['Broj upita'])}</span></span>
       <span><b>${esc(klijent(o))}</b><small>${esc(o['Klijent'] || '')}${o['Naziv firme / udruge'] ? ' · ' + esc(o['Ime i prezime / kontakt osoba']) : ''} · ${esc(o['Vrijeme'] || '')}</small></span>
-      <span class="c-usl"><small>${esc(o['Naziv projekta'] || o['Usluge'] || '')}</small><small>${o['Rok'] ? 'Rok: ' + esc(o['Rok']) : ''}${o['Budžet'] ? (o['Rok'] ? ' · ' : '') + 'Budžet: ' + esc(o['Budžet']) : ''}</small></span>
+      <span class="c-usl"><small>${esc(o['Naziv projekta'] || o['Usluge'] || '')}</small><small>${o['Rok isporuke'] ? '📅 ' + esc(hrDate(new Date(o['Rok isporuke'] + 'T12:00'))) : o['Rok'] ? 'Rok: ' + esc(o['Rok']) : ''}${o['Budžet'] ? (o['Rok'] ? ' · ' : '') + 'Budžet: ' + esc(o['Budžet']) : ''}</small></span>
       <span>${stBadge(o)}</span>
       <span class="amt">${amt ? eur(amt) : ''}</span></button>`;
   }).join('') : `<div class="empty">Nema upita u ovoj kartici.</div>`;
@@ -377,7 +388,7 @@ function openDrawer(nr) {
 }
 function closeDrawer() { OPEN = null; $('#drawer').classList.remove('open'); $('#drBg').classList.remove('open'); $('#drawer').setAttribute('aria-hidden', 'true'); clearInterval(TICK); }
 $('#drX').onclick = closeDrawer; $('#drBg').onclick = closeDrawer;
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('#setM').hidden) $('#setM').hidden = true; else if (OPEN) closeDrawer(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('#calM').hidden) $('#calM').hidden = true; else if (!$('#setM').hidden) $('#setM').hidden = true; else if (OPEN) closeDrawer(); } });
 
 function tick() {
   const o = OPEN && byNr(OPEN); if (!o) return;
@@ -406,7 +417,8 @@ function renderDrawer(o) {
       <button type="button" class="btn ghost" data-a="ispis">🖨 Ispis obračuna</button>
       <button type="button" class="btn del" data-a="brisi" style="margin-left:auto">🗑 Obriši ${s === 'Novo' ? 'upit' : 'nalog'}</button>
     </div>
-    <dl class="kv">${row('Zaprimljeno', o['Vrijeme'])}${row('Otvoreno', o['Otvoreno'])}${row('Završeno', o['Završeno'])}</dl>
+    <dl class="kv">${row('Zaprimljeno', o['Vrijeme'])}${row('Otvoreno', o['Otvoreno'])}${row('Rok isporuke', o['Rok isporuke'] ? hrDate(new Date(o['Rok isporuke'] + 'T12:00')) + (o['Kalendar ID'] ? ' · 📅 u kalendaru' : '') : '')}${row('Završeno', o['Završeno'])}</dl>
+    ${s !== 'Odbijeno' ? `<div class="acts"><button type="button" class="btn ghost sm" data-a="kal">📅 ${o['Kalendar ID'] ? 'Promijeni rok u kalendaru' : 'Dodaj rok u kalendar'}</button>${o['Kalendar ID'] ? '<button type="button" class="btn ghost sm" data-a="kalMakni">Makni iz kalendara</button>' : ''}</div>` : ''}
   </section>
 
   <section class="sec">
@@ -531,8 +543,10 @@ function bindDrawer(o) {
     const t = e.target.closest('#tpl button'); if (t) { B.querySelectorAll('#tpl button').forEach(b => b.classList.toggle('on', b === t)); $('#mTxt').value = fill(TPL()[+t.dataset.i].t, o); return; }
     const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
     const now = new Date().toLocaleString('hr-HR');
-    if (a === 'otvori') return save(o, { 'Status': 'U radu', 'Otvoreno': now }, 'Nalog otvoren');
-    if (a === 'odbij') { if (confirm('Označiti upit kao odbijen?')) return save(o, { 'Status': 'Odbijeno' }, 'Upit odbijen'); return; }
+    if (a === 'otvori') return calDialog(o, true);
+    if (a === 'kal') return calDialog(o, false);
+    if (a === 'kalMakni') { if (!confirm('Maknuti rok iz kalendara?')) return; try { await api({ akcija: 'kalendar', nr, brisi: true }); Object.assign(o, { 'Kalendar ID': '', 'Rok isporuke': '' }); renderDrawer(o); toast('Maknuto iz kalendara'); } catch (er) { toast(er.message, true); } return; }
+    if (a === 'odbij') { if (!confirm('Označiti upit kao odbijen?' + (o['Kalendar ID'] ? '\nRok će se maknuti iz kalendara.' : ''))) return; if (o['Kalendar ID']) { try { await api({ akcija: 'kalendar', nr, brisi: true }); o['Kalendar ID'] = ''; } catch (er) {} } return save(o, { 'Status': 'Odbijeno' }, 'Upit odbijen'); }
     if (a === 'vrati') return save(o, { 'Status': 'U radu' }, 'Vraćeno u rad');
     if (a === 'zakljuci') {
       const S = sessions(o), r = running(o); if (r) { r.e = new Date().toISOString(); }
@@ -563,6 +577,34 @@ function obrPolja(v, c) {
   return { 'Satnica (€)': v.satnica, 'Sati rada': v.satiRaw === '' ? '' : v.sati, 'Obračunati sati': c.h, 'Stavke': JSON.stringify(v.items),
     'Stavke (opis)': v.items.map(x => `${x.n} [${VRSTE[x.v] || VRSTE.naplata}${x.d ? ', ' + x.d : ''}${x.nab ? ', nabavna ' + r2(x.nab) + ' €' : ''}] × ${x.q}${x.v === 'trosak' ? '' : ' à ' + r2(x.c) + ' €'}`).join('; '),
     'Rad (€)': r2(c.rad), 'Ukupno bez PDV-a (€)': r2(c.osn), 'PDV (€)': r2(c.vat), 'Ukupno (€)': r2(c.uk), 'Troškovi (€)': r2(c.tr), 'Zarada (€)': r2(c.zar) };
+}
+
+/* ====== KALENDAR ====== */
+function calDialog(o, otvori) {
+  const M = $('#calM'), rok = /^\d{4}-\d{2}-\d{2}$/.test(o['Rok isporuke'] || '') ? o['Rok isporuke'] : /^\d{4}-\d{2}-\d{2}$/.test(o['Rok'] || '') ? o['Rok'] : '';
+  $('#calT').textContent = otvori ? 'Otvori nalog ' + o['Broj upita'] : 'Rok isporuke – ' + o['Broj upita'];
+  $('#calInfo').textContent = 'Klijent traži: ' + (/^\d{4}-\d{2}-\d{2}$/.test(o['Rok'] || '') ? hrDate(new Date(o['Rok'] + 'T12:00')) : (o['Rok'] || 'nije naveo rok')) + '.';
+  $('#cDat').value = rok; $('#cCal').checked = true; $('#cMsg').textContent = ''; $('#cOk').textContent = otvori ? '▶ Otvori nalog' : 'Spremi';
+  M.hidden = false; $('#cDat').focus();
+  $('#cCancel').onclick = () => M.hidden = true;
+  M.onclick = e => { if (e.target === M) M.hidden = true; };
+  $('#cOk').onclick = async () => {
+    const dat = $('#cDat').value, cal = $('#cCal').checked;
+    if (cal && !dat) { $('#cMsg').className = 'msg bad'; $('#cMsg').textContent = 'Za kalendar upiši datum roka.'; return; }
+    $('#cOk').disabled = true; $('#cMsg').className = 'msg'; $('#cMsg').textContent = 'Spremam…';
+    try {
+      if (otvori) await save(o, Object.assign({ 'Status': 'U radu', 'Otvoreno': new Date().toLocaleString('hr-HR') }, dat ? { 'Rok isporuke': dat } : {}));
+      else if (dat && !cal) await save(o, { 'Rok isporuke': dat });
+      if (cal) {
+        const j = await api({ akcija: 'kalendar', nr: o['Broj upita'], datum: dat, klijent: klijent(o), projekt: o['Naziv projekta'] || '', usluge: o['Usluge'] || '',
+          kontakt: [o['Ime i prezime / kontakt osoba'], o['Mobitel'], o['E-pošta']].filter(Boolean).join(', '), opis: o['Opis projekta'] || '' });
+        Object.assign(o, { 'Kalendar ID': j.id, 'Rok isporuke': dat });
+      }
+      M.hidden = true; renderAll(); if (OPEN) renderDrawer(o);
+      toast(otvori ? 'Nalog otvoren' + (cal ? ' · rok upisan u kalendar' : '') : (cal ? 'Rok upisan u kalendar' : 'Rok spremljen'));
+    } catch (er) { $('#cMsg').className = 'msg bad'; $('#cMsg').textContent = er.message.includes('Calendar') || er.message.includes('kalendar') ? 'Kalendar nije dostupan: u Apps Scriptu ponovno pokreni odobriDozvole i dopusti pristup kalendaru. (' + er.message + ')' : er.message; }
+    $('#cOk').disabled = false;
+  };
 }
 
 /* ====== PORUKE ====== */
