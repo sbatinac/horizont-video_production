@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Video produkcija za firme: promotivni videi, Reels i TikTok, animacija logotipa, vizualni identitet i web stranice. Od ideje do gotovog videa.">
+<meta name="description" content="Video produkcija za firme i pojedince: promotivni videi, Reels i TikTok, animacija logotipa, vizualni identitet i web stranice. Od ideje do gotovog videa.">
 <meta property="og:title" content="Horizont LHB – video produkcija">
 <meta property="og:description" content="Promotivni videi, Reels, animacija logotipa i vizuali za firme. Od ideje do gotovog videa.">
 <meta property="og:image" content="og.jpg">
@@ -62,7 +62,8 @@ nav a{text-decoration:none;color:var(--muted)} nav a:hover{color:var(--ink)}
 
 /* banner: intro video */
 .banner{background:#000;position:relative;line-height:0;display:flex;justify-content:center}
-.banner video{display:block;width:100%;height:auto;aspect-ratio:1920/1070;max-height:min(80vh,1070px);object-fit:cover;object-position:50% 60%;background:#000}
+.banner{padding:clamp(14px,2.5vw,32px) 0 clamp(52px,5vw,64px)}
+.banner video{display:block;width:min(1100px,92vw);height:auto;aspect-ratio:1920/1070;max-height:68vh;object-fit:contain;background:#000;border-radius:12px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 30px 80px -30px rgba(30,107,255,.6)}
 .banner::after{content:none}
 .vctl{position:absolute;right:max(16px,env(safe-area-inset-right,0px));bottom:18px;z-index:2;display:flex;gap:8px;line-height:1}
 .vbtn{background:rgba(4,10,24,.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid #34466B;color:#F2F6FF;font:600 .85rem var(--body);padding:8px 14px;border-radius:999px;cursor:pointer}
@@ -96,7 +97,7 @@ section{padding-block:72px}
 .alt{background:var(--surface);border-block:1px solid var(--line)}
 
 /* za koga */
-.devices{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.devices{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
 .dev{border:1px solid var(--line);border-radius:8px;padding:18px;display:grid;gap:6px;background:var(--bg)}
 .dev .lbl{color:var(--cyan)}
 .dev b{font:700 1.05rem var(--display)}
@@ -238,7 +239,7 @@ section{padding-block:72px}
   .d-kla{width:22vw;top:18px;right:2vw}
   .d-mix{width:46vw;top:auto;bottom:-30px;right:-14vw;opacity:.35}
 }
-@media (max-width:700px){.d-kam{display:none}}
+@media (max-width:1000px){.d-kam{display:none}}
 @media (prefers-reduced-motion:reduce){.deco{animation:none}}
 
 
@@ -344,6 +345,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   section{padding-block:52px}
   .vbtn{padding:6px 11px;font-size:.78rem}
   .vctl{position:static;justify-content:center;padding:10px 0 14px}
+  .banner{padding-bottom:0}
   .banner{flex-direction:column;align-items:center}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}html{scroll-behavior:auto}}
@@ -367,7 +369,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <div class="hero has-deco"><img class="deco d-kam" src="deco-kamera.webp" alt="" aria-hidden="true" loading="lazy" decoding="async"><div class="wrap">
   <div>
-    <span class="lbl">Video produkcija za firme</span>
+    <span class="lbl">Video produkcija za firme i pojedince</span>
     <h1 style="margin-top:14px">Vaša firma zaslužuje da se <em class="gt">vidi.</em></h1>
     <p class="lead">Promotivni videi, Reels i TikTok, animirani logotipi i vizuali. Od ideje do gotovog videa, spremnog za društvene mreže, web i ekrane.</p>
     <div class="cta">
@@ -403,6 +405,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div class="dev"><span class="lbl">Lokal</span><b>Ugostitelji</b></div>
     <div class="dev"><span class="lbl">Prodaja</span><b>Trgovine i webshopovi</b></div>
     <div class="dev"><span class="lbl">Zajednica</span><b>Udruge i događanja</b></div>
+    <div class="dev"><span class="lbl">Privatno</span><b>Fizičke osobe</b></div>
   </div>
 </div></section>
 
@@ -480,14 +483,42 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 <section id="ponuda" class="has-deco"><img class="deco d-kla" src="deco-klapa.webp" alt="" aria-hidden="true" loading="lazy" decoding="async"><img class="deco d-mix" src="deco-mikseta.webp" alt="" aria-hidden="true" loading="lazy" decoding="async"><div class="wrap">
   <div class="sec-head"><span class="lbl">Ponuda</span><h2>Zatražite ponudu</h2><p>Ispunite kratki upit. Javljamo se s idejom i cijenom.</p></div>
   <form class="wiz" id="pForm" novalidate>
-    <div class="row2">
-      <div class="fld"><label for="f_firma">Firma / naziv<span class="rq">*</span></label><input type="text" id="f_firma" autocomplete="organization"><p class="err" role="alert"></p></div>
-      <div class="fld"><label for="f_ime">Kontakt osoba<span class="rq">*</span></label><input type="text" id="f_ime" autocomplete="name"><p class="err" role="alert"></p></div>
+    <fieldset class="fld" id="fs_tip"><legend>Upit šaljete kao<span class="rq">*</span></legend>
+      <div class="chips">
+        <label class="chip"><input type="radio" name="tip" value="Fizička osoba"><span>Fizička osoba</span></label>
+        <label class="chip"><input type="radio" name="tip" value="Firma ili obrt"><span>Firma ili obrt</span></label>
+        <label class="chip"><input type="radio" name="tip" value="Udruga ili ustanova"><span>Udruga ili ustanova</span></label>
+      </div><p class="err" role="alert"></p>
+    </fieldset>
+    <div class="row2" id="pravna" hidden>
+      <div class="fld"><label for="f_firma">Naziv firme / obrta / udruge<span class="rq">*</span></label><input type="text" id="f_firma" autocomplete="organization"><p class="err" role="alert"></p></div>
+      <div class="fld"><label for="f_oib">OIB<span class="rq">*</span></label><input type="text" id="f_oib" inputmode="numeric" maxlength="11" autocomplete="off" placeholder="11 znamenki"><p class="err" role="alert"></p></div>
     </div>
     <div class="row2">
+      <div class="fld"><label for="f_ime" id="f_ime_l">Ime i prezime<span class="rq">*</span></label><input type="text" id="f_ime" autocomplete="name"><p class="err" role="alert"></p></div>
       <div class="fld"><label for="f_email">E-pošta<span class="rq">*</span></label><input type="email" id="f_email" autocomplete="email"><p class="err" role="alert"></p></div>
-      <div class="fld"><label for="f_tel">Telefon</label><input type="tel" id="f_tel" autocomplete="tel" inputmode="tel"></div>
     </div>
+    <div class="row2">
+      <div class="fld"><label for="f_tel">Mobitel<span class="rq" id="telRq">*</span></label><input type="tel" id="f_tel" autocomplete="tel" inputmode="tel" placeholder="091 234 5678"><p class="err" role="alert"></p></div>
+      <div class="fld"><label for="f_grad">Grad / mjesto</label><input type="text" id="f_grad" autocomplete="address-level2"></div>
+    </div>
+    <fieldset class="fld" id="fs_kanal"><legend>Kako da Vas kontaktiramo?<span class="rq">*</span> <span class="fh">Može više odgovora.</span></legend>
+      <div class="chips">
+        <label class="chip"><input type="checkbox" name="kanal" value="Telefonski poziv"><span>Telefonski poziv</span></label>
+        <label class="chip"><input type="checkbox" name="kanal" value="WhatsApp"><span>WhatsApp</span></label>
+        <label class="chip"><input type="checkbox" name="kanal" value="Viber"><span>Viber</span></label>
+        <label class="chip"><input type="checkbox" name="kanal" value="SMS"><span>SMS</span></label>
+        <label class="chip"><input type="checkbox" name="kanal" value="E-pošta"><span>E-pošta</span></label>
+      </div><p class="err" role="alert"></p>
+    </fieldset>
+    <fieldset class="fld" id="fs_kada"><legend>Kada Vam odgovara?<span class="rq">*</span> <span class="fh">Može više odgovora.</span></legend>
+      <div class="chips">
+        <label class="chip"><input type="checkbox" name="kada" value="Radnim danom 08–16 h"><span>Radnim danom 08–16 h</span></label>
+        <label class="chip"><input type="checkbox" name="kada" value="Radnim danom 16–20 h"><span>Radnim danom 16–20 h</span></label>
+        <label class="chip"><input type="checkbox" name="kada" value="Vikendom"><span>Vikendom</span></label>
+        <label class="chip"><input type="checkbox" name="kada" value="Bilo kada"><span>Bilo kada</span></label>
+      </div><p class="err" role="alert"></p>
+    </fieldset>
     <fieldset class="fld" id="fs_usluge"><legend>Što Vam treba?<span class="rq">*</span> <span class="fh">Može više odgovora.</span></legend>
       <div class="chips">
         <label class="chip"><input type="checkbox" name="usluge" value="Promotivni video"><span>Promotivni video</span></label>
@@ -496,6 +527,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
         <label class="chip"><input type="checkbox" name="usluge" value="Logo i identitet"><span>Logo i identitet</span></label>
         <label class="chip"><input type="checkbox" name="usluge" value="AI vizuali"><span>AI vizuali</span></label>
         <label class="chip"><input type="checkbox" name="usluge" value="Montaža"><span>Montaža</span></label>
+        <label class="chip"><input type="checkbox" name="usluge" value="Snimanje događaja"><span>Snimanje događaja</span></label>
+        <label class="chip"><input type="checkbox" name="usluge" value="Privatni video (rođendan, vjenčanje…)"><span>Privatni video (rođendan, vjenčanje…)</span></label>
         <label class="chip"><input type="checkbox" name="usluge" value="Web stranica"><span>Web stranica</span></label>
         <label class="chip"><input type="checkbox" name="usluge" value="PDF / tisak"><span>PDF / tisak</span></label>
         <label class="chip"><input type="checkbox" name="usluge" value="Nisam siguran"><span>Nisam siguran</span></label>
@@ -509,6 +542,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
         <label class="chip"><input type="checkbox" name="kanali" value="Web stranica"><span>Web stranica</span></label>
         <label class="chip"><input type="checkbox" name="kanali" value="Ekrani / TV"><span>Ekrani / TV</span></label>
         <label class="chip"><input type="checkbox" name="kanali" value="Sajam / događanje"><span>Sajam / događanje</span></label>
+        <label class="chip"><input type="checkbox" name="kanali" value="Privatno"><span>Privatno</span></label>
       </div>
     </fieldset>
     <div class="row2">
@@ -789,13 +823,31 @@ function pauseIntro() { if (intro && !intro.paused) intro.pause(); }
   const checked = n => [...f.querySelectorAll(`input[name="${n}"]:checked`)].map(i => i.value);
   const mark = (el, t) => { const fl = el.closest('.fld'); fl.classList.toggle('bad', !!t); fl.querySelector('.err').textContent = t; return !t; };
   const g = id => document.getElementById(id);
+  const tip = () => (f.querySelector('input[name="tip"]:checked') || {}).value || '';
+  const pravna = () => tip() && tip() !== 'Fizička osoba';
+  const samoMail = () => { const k = checked('kanal'); return k.length === 1 && k[0] === 'E-pošta'; };
+  // OIB: 11 znamenki + kontrolna znamenka (ISO 7064, MOD 11,10)
+  const oibOk = s => { if (!/^\d{11}$/.test(s)) return false; let a = 10; for (let i = 0; i < 10; i++) { a = (a + +s[i]) % 10; a = (a || 10) * 2 % 11; } return (11 - a) % 10 === +s[10]; };
+  const sync = () => {
+    g('pravna').hidden = !pravna();
+    g('f_ime_l').firstChild.textContent = pravna() ? 'Kontakt osoba' : 'Ime i prezime';
+    g('telRq').hidden = samoMail();
+  };
+  f.addEventListener('change', sync);
+  g('f_oib').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 11); });
   f.addEventListener('submit', async e => {
     e.preventDefault();
     if (v('f_web')) return;
+    const P = pravna();
     const ok = [
-      mark(g('f_firma'), v('f_firma') ? '' : 'Upišite naziv firme.'),
-      mark(g('f_ime'), v('f_ime') ? '' : 'Upišite ime kontakt osobe.'),
+      mark(g('fs_tip'), tip() ? '' : 'Odaberite fizička osoba, firma ili udruga.'),
+      P ? mark(g('f_firma'), v('f_firma') ? '' : 'Upišite naziv.') : true,
+      P ? mark(g('f_oib'), oibOk(v('f_oib')) ? '' : (v('f_oib').length === 11 ? 'OIB nije ispravan, provjerite znamenke.' : 'OIB ima 11 znamenki.')) : true,
+      mark(g('f_ime'), v('f_ime') ? '' : (P ? 'Upišite ime kontakt osobe.' : 'Upišite ime i prezime.')),
       mark(g('f_email'), /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v('f_email')) ? '' : 'Upišite ispravnu e-adresu.'),
+      mark(g('f_tel'), samoMail() || v('f_tel').replace(/\D/g, '').length >= 8 ? '' : 'Upišite cijeli broj mobitela.'),
+      mark(g('fs_kanal'), checked('kanal').length ? '' : 'Odaberite barem jedan način.'),
+      mark(g('fs_kada'), checked('kada').length ? '' : 'Odaberite kada Vam odgovara.'),
       mark(g('fs_usluge'), checked('usluge').length ? '' : 'Odaberite barem jednu stavku.'),
       mark(g('f_opis'), v('f_opis') ? '' : 'Napišite par rečenica o projektu.'),
       mark(g('f_gdpr'), g('f_gdpr').checked ? '' : 'Potrebna je privola za obradu podataka.')
@@ -805,11 +857,12 @@ function pauseIntro() { if (intro && !intro.paused) intro.pause(); }
     btn.disabled = true; btn.textContent = 'Šaljem…'; msg.className = 'wz-msg'; msg.textContent = '';
     try {
       const r = await fetch(ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({
-        vrijeme: new Date().toLocaleString('hr-HR'), firma: v('f_firma'), ime: v('f_ime'), email: v('f_email'), telefon: v('f_tel'),
+        vrijeme: new Date().toLocaleString('hr-HR'), tip: tip(), firma: P ? v('f_firma') : '', oib: P ? v('f_oib') : '', ime: v('f_ime'), email: v('f_email'), telefon: v('f_tel'), grad: v('f_grad'),
+        kontakt_nacin: checked('kanal').join(', '), kontakt_kada: checked('kada').join(', '),
         usluge: checked('usluge').join(', '), kanali: checked('kanali').join(', '), budzet: checked('budzet').join(''), rok: v('f_rok'), opis: v('f_opis') }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || j.ok === false) throw new Error();
-      f.reset(); msg.className = 'wz-msg ok'; msg.textContent = 'Hvala! Upit je poslan, javljamo se uskoro.';
+      f.reset(); sync(); msg.className = 'wz-msg ok'; msg.textContent = 'Hvala! Upit' + (j.nr ? ' ' + j.nr : '') + ' je poslan. Potvrda stiže na Vaš e-mail, a javljamo se odabranim kanalom.';
     } catch (e) { msg.className = 'wz-msg bad'; msg.textContent = 'Slanje nije uspjelo. Pokušajte ponovno ili nazovite 091/358 4122.'; }
     btn.disabled = false; btn.textContent = 'Pošalji upit →';
   });
