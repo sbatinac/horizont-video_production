@@ -214,6 +214,30 @@ section{padding-block:72px}
 }
 @media (prefers-reduced-motion:reduce){.mt .bg,.spin{animation:none}.mt{opacity:1;transform:none}}
 
+
+/* UKRASI: oprema na prozirnoj pozadini, lagano lebdi iza sadržaja */
+.has-deco{position:relative;overflow:clip}
+.has-deco>.wrap{position:relative;z-index:1}
+.deco{position:absolute;z-index:0;pointer-events:none;user-select:none;height:auto;filter:drop-shadow(0 28px 34px rgba(23,10,26,.22));animation:float var(--fd,8s) ease-in-out infinite;transform:rotate(var(--r,0deg))}
+@keyframes float{0%,100%{transform:translateY(0) rotate(var(--r,0deg))}50%{transform:translateY(-14px) rotate(calc(var(--r,0deg) + 2deg))}}
+.d-kam{width:clamp(220px,27vw,380px);right:max(-30px,calc(50% - 600px));top:34px;--r:-7deg;--fd:9s}
+.d-mic{width:clamp(130px,15vw,210px);right:max(-20px,calc(50% - 640px));top:-40px;--r:14deg;--fd:7s}
+.d-slu{width:clamp(150px,20vw,280px);right:max(10px,calc(50% - 600px));top:12%;--r:-12deg;--fd:8.5s;z-index:3;filter:drop-shadow(0 0 40px rgba(255,46,110,.35)) drop-shadow(0 20px 30px rgba(0,0,0,.6))}
+.d-kla{width:clamp(130px,15vw,210px);right:max(10px,calc(50% - 590px));top:36px;--r:9deg;--fd:7.5s}
+.d-mix{width:clamp(260px,30vw,420px);right:max(-90px,calc(50% - 700px));top:46%;--r:-6deg;--fd:10s}
+.hero .ticket{position:relative;z-index:1}
+.hero .wrap{padding-top:clamp(40px,9vw,130px)}
+@media (max-width:900px){
+  .d-kam{width:34vw;top:14px;right:-4vw}
+  .hero .wrap{padding-top:40px}
+  .d-mic{width:24vw;top:-14px;right:-4vw}
+  .d-slu{width:30vw;top:auto;bottom:10%;right:2vw}
+  .d-kla{width:22vw;top:18px;right:2vw}
+  .d-mix{width:46vw;top:auto;bottom:-30px;right:-14vw;opacity:.35}
+}
+@media (max-width:700px){.d-kam{display:none}}
+@media (prefers-reduced-motion:reduce){.deco{animation:none}}
+
 /* web projekti */
 .webs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 .wp{display:grid;gap:10px;align-content:start;background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px;text-decoration:none;transition:border-color .2s,transform .2s}
@@ -327,7 +351,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   </div>
 </div>
 
-<div class="hero"><div class="wrap">
+<div class="hero has-deco"><img class="deco d-kam" src="deco-kamera.webp" alt="" aria-hidden="true" loading="lazy" decoding="async"><div class="wrap">
   <div>
     <span class="lbl">Video produkcija za firme</span>
     <h1 style="margin-top:14px">Vaša firma zaslužuje da se <em class="gt">vidi.</em></h1>
@@ -357,7 +381,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   </aside>
 </div></div>
 
-<section class="alt"><div class="wrap">
+<section class="alt has-deco"><img class="deco d-mic" src="deco-mikrofon.webp" alt="" aria-hidden="true" loading="lazy" decoding="async"><div class="wrap">
   <div class="sec-head"><span class="lbl">Za koga</span><h2>Kome radimo</h2></div>
   <div class="devices">
     <div class="dev"><span class="lbl">Posao</span><b>Obrti</b></div>
@@ -383,7 +407,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   </div>
 </div></section>
 
-<div class="wave" aria-hidden="true"><span class="sun"></span><span class="floor"></span>
+<div class="wave" aria-hidden="true"><span class="sun"></span><span class="floor"></span><img class="deco d-slu" src="deco-slusalice.webp" alt="" loading="lazy" decoding="async">
   <div class="wrap"><p class="slog">Ideja. Kadar. <span class="gt">Horizont.</span></p></div>
 </div>
 
@@ -430,7 +454,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   </div>
 </div></section>
 
-<section id="ponuda"><div class="wrap">
+<section id="ponuda" class="has-deco"><img class="deco d-kla" src="deco-klapa.webp" alt="" aria-hidden="true" loading="lazy" decoding="async"><img class="deco d-mix" src="deco-mikseta.webp" alt="" aria-hidden="true" loading="lazy" decoding="async"><div class="wrap">
   <div class="sec-head"><span class="lbl">Ponuda</span><h2>Zatražite ponudu</h2><p>Ispunite kratki upit. Javljamo se s idejom i cijenom.</p></div>
   <form class="wiz" id="pForm" novalidate>
     <div class="row2">
