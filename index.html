@@ -253,6 +253,25 @@ section{padding-block:72px}
 .st-txt p{color:var(--muted)}
 @media (max-width:900px){.st-txt{position:static}.st-txt>div{max-width:none;margin-bottom:12px}.st-img{width:125%;max-width:none;margin-left:-6%}}
 
+
+/* GLAZBA: dva gumba u zaglavlju, lagano pojačavanje i stišavanje */
+.hdr-r{display:flex;align-items:center;gap:10px}
+.music{display:flex;align-items:center;gap:3px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
+.music .mlbl{font:500 .66rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);padding:0 6px 0 9px}
+.mbtn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:0;color:var(--ink);font:600 .84rem var(--body);padding:6px 11px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:background .2s,color .2s}
+.mbtn:hover{background:#E6ECF6}
+.mbtn.on{background:var(--grad);color:var(--on-hot);box-shadow:0 6px 18px -8px rgba(255,149,0,.8)}
+.mbtn .eq{display:inline-flex;align-items:flex-end;gap:2px;height:12px}
+.mbtn .eq i{width:3px;height:30%;background:currentColor;border-radius:1px}
+.mbtn.on .eq i{animation:eq .9s ease-in-out infinite}
+.mbtn.on .eq i:nth-child(2){animation-delay:.2s}.mbtn.on .eq i:nth-child(3){animation-delay:.4s}
+@keyframes eq{0%,100%{height:30%}50%{height:100%}}
+.music.float{position:fixed;left:max(14px,env(safe-area-inset-left,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));z-index:90;box-shadow:0 14px 40px -14px rgba(8,20,45,.45);background:#fff}
+@media (max-width:1000px){header .wrap{flex-wrap:wrap}.hdr-r{order:2}}
+@media (max-width:700px){.hdr-r{width:100%;justify-content:center}.music{flex:0 1 auto}}
+@media (max-width:380px){.music .mlbl{display:none}}
+@media (prefers-reduced-motion:reduce){.mbtn.on .eq i{animation:none;height:70%}}
+
 /* web projekti */
 .webs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 .wp{display:grid;gap:10px;align-content:start;background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px;text-decoration:none;transition:border-color .2s,transform .2s}
@@ -356,7 +375,14 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <a class="brand" href="#"><span class="logo"><img src="logo-znak.webp" alt="" width="48" height="48"></span><span>Horizont LHB<small>Video produkcija</small></span></a>
   <button type="button" class="burger" id="burger" aria-expanded="false" aria-controls="mnav" aria-label="Izbornik"><span></span><span></span><span></span></button>
   <nav id="mnav"><a href="#usluge">Usluge</a><a href="#radovi">Radovi</a><a href="#video">Video</a><a href="#dokumenti">Dokumenti</a><a href="#web">Web</a><a href="#postupak">Kako radimo</a><a href="#kontakt">Kontakt</a></nav>
-  <a class="btn hdr-btn" href="#ponuda">Zatraži ponudu</a>
+  <div class="hdr-r">
+    <div class="music" id="music" role="group" aria-label="Glazba">
+      <span class="mlbl">Glazba</span>
+      <button type="button" class="mbtn" data-src="glazba-1.mp3" aria-pressed="false" title="Neon Sunset Drive"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>Sunset</button>
+      <button type="button" class="mbtn" data-src="glazba-2.mp3" aria-pressed="false" title="Neon Overdrive"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>Overdrive</button>
+    </div>
+    <a class="btn hdr-btn" href="#ponuda">Zatraži ponudu</a>
+  </div>
 </div></header>
 
 <div class="banner">
@@ -733,7 +759,7 @@ function vLoad(f) {
   $('#vCap').textContent = `${f.name} · ${vCur + 1}/${vFiles.length}`;
 }
 function openVid(i, tile) {
-  pauseIntro(); vCur = i; const f = vFiles[i], m = $('#mVid');
+  pauseIntro(); if (window.musicPause) musicPause(); vCur = i; const f = vFiles[i], m = $('#mVid');
   if (STILL || !tile || !tile.animate) { m.classList.add('open'); vLoad(f); return; }
   const a = tile.getBoundingClientRect(), b = vTarget(f);
   const fl = document.createElement('div'); fl.className = 'flip';
@@ -868,6 +894,40 @@ function pauseIntro() { if (intro && !intro.paused) intro.pause(); }
   });
   f.addEventListener('change', e => { const fl = e.target.closest('.fld.bad'); if (fl) { fl.classList.remove('bad'); fl.querySelector('.err').textContent = ''; } });
 })();
+
+/* GLAZBA: svira samo na klik, lagano se pojača (2 s) i stiša (1,5 s); pri promjeni pjesme meki prijelaz */
+(() => {
+  const box = document.getElementById('music'); if (!box) return;
+  const btns = [...box.querySelectorAll('.mbtn')], VOL = 0.55;
+  const A = {}; let cur = null;
+  const ramp = (a, to, ms, done) => { cancelAnimationFrame(a._raf); const from = a.volume, t0 = performance.now();
+    const step = t => { const k = Math.min(1, (t - t0) / ms); a.volume = Math.max(0, Math.min(1, from + (to - from) * (k * k * (3 - 2 * k)))); if (k < 1) a._raf = requestAnimationFrame(step); else if (done) done(); };
+    a._raf = requestAnimationFrame(step); };
+  const audio = src => A[src] || (A[src] = Object.assign(new Audio(src), { loop: true, preload: 'none', volume: 0 }));
+  const mark = () => btns.forEach(b => { const on = b.dataset.src === cur; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+  const stop = src => { const a = A[src]; if (a) ramp(a, 0, 1500, () => a.pause()); };
+  btns.forEach(b => b.addEventListener('click', () => {
+    const src = b.dataset.src;
+    if (cur === src) { stop(src); cur = null; mark(); return; }
+    if (cur) stop(cur);
+    const a = audio(src); cur = src; mark();
+    a.play().then(() => ramp(a, VOL, 2000)).catch(() => { cur = null; mark(); });
+  }));
+  window.musicPause = () => { if (cur) { stop(cur); cur = null; mark(); } };
+  document.getElementById('vSound')?.addEventListener('click', () => { if (!intro.muted) window.musicPause(); });
+  // kad zaglavlje ode s ekrana, gumbi ostaju dolje lijevo
+  const ph = document.createElement('span'); ph.style.display = 'none'; box.after(ph);
+  const hdr = document.querySelector('header');
+  if ('IntersectionObserver' in window && hdr) new IntersectionObserver(([e]) => {
+    const f = !e.isIntersecting && getComputedStyle(hdr).position !== 'sticky';
+    if (f === box.classList.contains('float')) return;
+    box.classList.toggle('float', f); if (f) document.body.appendChild(box); else ph.before(box);
+  }).observe(hdr);
+})();
+
+/* BROJAČ POSJETA: jednom po sesiji */
+(() => { try { if (sessionStorage.getItem('hzv_hit')) return; sessionStorage.setItem('hzv_hit', '1'); } catch (e) {}
+  if (!ENDPOINT.startsWith('UPISI')) fetch(ENDPOINT + '?a=hit', { mode: 'no-cors' }).catch(() => {}); })();
 
 /* KONTAKT + PODIJELI */
 (() => {
