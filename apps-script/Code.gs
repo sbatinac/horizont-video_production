@@ -71,7 +71,7 @@ function admin_(d) {
   const props = PropertiesService.getScriptProperties();
   if (d.akcija === 'podaci') {
     return { ok: true, upiti: table_(SHEET_NAME), posjete: table_(SHEET_POSJETE), postavke: postavke_(),
-      predlosci: JSON.parse(props.getProperty('predlosci') || '[]'), tablica: ss_().getUrl(), telegram: tgInfo_() };
+      predlosci: JSON.parse(props.getProperty('predlosci') || '[]'), tablica: ss_().getUrl(), telegram: tgInfo_(), brojac: brojacInfo_() };
   }
   if (d.akcija === 'postavke') {
     const P = d.postavke || {};
@@ -98,12 +98,19 @@ function admin_(d) {
     return { ok: true, id: id };
   }
   if (d.akcija === 'brisi') {
-    const sh = sheet_(), row = rowByNr_(sh, d.nr);
-    if (!row) return { ok: false, error: 'Upit nije pronađen.' };
     if (d.lozinka !== ADMIN_KEY) { Utilities.sleep(800); return { ok: false, error: 'Pogrešna lozinka za potvrdu.' }; }
-    brisiDogadaj_(cell_(sh, row, 'Kalendar ID'));
-    sh.deleteRow(row);
-    return { ok: true };
+    const sh = sheet_(), nrs = Array.isArray(d.nrs) ? d.nrs : [d.nr];
+    const rows = nrs.map(nr => rowByNr_(sh, nr)).filter(Boolean).sort((a, b) => b - a); // odozdo, da se redovi ne pomaknu
+    if (!rows.length) return { ok: false, error: 'Upit nije pronađen.' };
+    rows.forEach(row => { brisiDogadaj_(cell_(sh, row, 'Kalendar ID')); sh.deleteRow(row); });
+    return { ok: true, obrisano: rows.length, brojac: brojacInfo_() };
+  }
+  if (d.akcija === 'brojac') {
+    const sh = sheet_(), god = new Date().getFullYear(), od = Math.floor(Number(d.od));
+    if (!(od >= 1 && od <= 9999)) return { ok: false, error: 'Upiši broj od 1 do 9999.' };
+    if (brojeviGodine_(sh, god).indexOf(od) !== -1) return { ok: false, error: 'Broj UP-' + god + '-' + String(od).padStart(4, '0') + ' već postoji. Prvo obriši taj upit ili odaberi drugi broj.' };
+    PropertiesService.getScriptProperties().setProperty('brojac', JSON.stringify({ god, od }));
+    return { ok: true, brojac: brojacInfo_() };
   }
   return { ok: false, error: 'Nepoznata akcija.' };
 }
@@ -183,12 +190,25 @@ function table_(name) {
   return { headers: v[0], rows: v.slice(1) };
 }
 
-function noviBroj_(sh) {
-  const god = new Date().getFullYear(), pre = 'UP-' + god + '-';
-  const n = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getDisplayValues().flat()
+// Brojevi upita: UP-GGGG-NNNN. Sljedeći = zadnji + 1, osim ako je u adminu ručno postavljen početni broj.
+function brojeviGodine_(sh, god) {
+  const pre = 'UP-' + god + '-';
+  return sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getDisplayValues().flat()
     .filter(v => String(v).startsWith(pre)).map(v => +String(v).slice(pre.length) || 0) : [];
-  return pre + String((n.length ? Math.max.apply(null, n) : 0) + 1).padStart(4, '0');
 }
+function sljedeciBroj_(sh) {
+  const god = new Date().getFullYear(), N = brojeviGodine_(sh, god), P = PropertiesService.getScriptProperties();
+  const rucno = JSON.parse(P.getProperty('brojac') || 'null');
+  let n = rucno && rucno.god === god ? rucno.od : (N.length ? Math.max.apply(null, N) : 0) + 1;
+  while (N.indexOf(n) !== -1) n++; // nikad dva ista broja
+  return { god, n, zadnji: N.length ? Math.max.apply(null, N) : 0, rucno: !!(rucno && rucno.god === god) };
+}
+function noviBroj_(sh) {
+  const s = sljedeciBroj_(sh);
+  PropertiesService.getScriptProperties().deleteProperty('brojac'); // ručna postavka vrijedi za jedan (sljedeći) upit
+  return 'UP-' + s.god + '-' + String(s.n).padStart(4, '0');
+}
+function brojacInfo_() { const s = sljedeciBroj_(sheet_()); return { god: s.god, zadnji: s.zadnji, sljedeci: s.n, rucno: s.rucno }; }
 
 function hit_() {
   const lock = LockService.getScriptLock();

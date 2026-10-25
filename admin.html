@@ -150,6 +150,13 @@ dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;overflow-wrap:anywhere}
 .tot .int{color:var(--muted);font-size:.88rem}.tot span.int:nth-of-type(odd){padding-top:6px}
 .tot .zar{color:var(--ok);font-weight:700;font-size:1rem}.tot .zar.neg{color:var(--bad)}
 .tgbox{border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px}
+.bulk{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px;padding:8px 12px;background:var(--surface);border-radius:10px}
+.bulk .btn{margin-left:auto}
+.itw{display:flex;align-items:stretch;gap:8px}
+.itw .it{flex:1;min-width:0}
+.pick{display:flex;align-items:center;justify-content:center;width:42px;flex:none;background:#fff;border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.pick input{width:20px;height:20px;accent-color:var(--bad);cursor:pointer}
+.itw.sel .it,.itw.sel .pick{border-color:#EFB7C5;background:#FFF6F8}
 .btn.del{background:var(--bad);color:#fff}.btn.del:hover{box-shadow:0 8px 22px -10px rgba(192,18,63,.8)}
 .paid{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px;border-radius:10px;background:var(--surface)}
 .paid.yes{background:var(--ok-soft)}
@@ -208,6 +215,11 @@ dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;overflow-wrap:anywhere}
       <div class="tabs" id="tabs" role="tablist"></div>
       <div class="tools"><input type="search" id="q" placeholder="Traži: ime, firma, broj, usluga…" aria-label="Traži"></div>
     </div>
+    <div class="bulk" id="bulk">
+      <label class="chk" style="font-weight:600;font-size:.88rem"><input type="checkbox" id="selAll"> Označi sve</label>
+      <span class="note" id="selN" style="font-style:normal"></span>
+      <button type="button" class="btn del sm" id="delSel" disabled>🗑 Obriši označene</button>
+    </div>
     <div class="list" id="list"></div>
   </section>
 </main>
@@ -239,6 +251,12 @@ dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;overflow-wrap:anywhere}
     <label class="f">Napomena na obračunu<textarea id="sNap" rows="3"></textarea></label>
     <div class="acts"><button type="button" class="btn" id="sSave">Spremi</button><button type="button" class="btn ghost" id="sCancel">Odustani</button></div>
     <p class="msg" id="sMsg"></p>
+    <div class="tgbox">
+      <h3 style="font-size:1rem">Brojevi upita</h3>
+      <p class="note" style="margin:0" id="brSt"></p>
+      <div class="acts" style="align-items:end"><label class="f" style="flex:0 1 200px">Sljedeći upit dobiva broj<input type="number" id="brOd" min="1" max="9999" step="1"></label><button type="button" class="btn ghost" id="brSave">Postavi</button></div>
+      <p class="msg" id="brMsg"></p>
+    </div>
     <div class="tgbox">
       <h3 style="font-size:1rem">Telegram obavijesti</h3>
       <p class="note" style="margin:0" id="tgSt">Nije postavljeno.</p>
@@ -283,7 +301,7 @@ async function load() {
   D.upiti = toObjs(j.upiti).reverse();
   D.posjete = toObjs(j.posjete);
   D.postavke = Object.assign({ satnica: 100, pdv: false, stopa: 25, napomena: '' }, j.postavke || {});
-  D.predlosci = j.predlosci || []; D.telegram = j.telegram || { bot: '', povezan: false };
+  D.predlosci = j.predlosci || []; D.telegram = j.telegram || { bot: '', povezan: false }; D.brojac = j.brojac || null;
   $('#sheetLink').href = j.tablica || '#';
   renderAll();
   if (OPEN) { const o = byNr(OPEN); o ? openDrawer(o.nr_) : closeDrawer(); }
@@ -377,15 +395,37 @@ function renderList() {
   const L = D.upiti.filter(TABS[TAB]).filter(o => !q || Object.values(o).join(' ').toLowerCase().includes(q));
   $('#list').innerHTML = L.length ? L.map(o => {
     const c = calc(o), amt = num(o['Ukupno (€)']) || (status(o) === 'U radu' && c.uk ? c.uk : 0);
-    return `<button type="button" class="it" data-nr="${esc(o['Broj upita'])}">
+    return `<div class="itw${SEL.has(o['Broj upita']) ? ' sel' : ''}"><label class="pick" title="Označi"><input type="checkbox" class="selc" value="${esc(o['Broj upita'])}"${SEL.has(o['Broj upita']) ? ' checked' : ''} aria-label="Označi ${esc(o['Broj upita'])}"></label><button type="button" class="it" data-nr="${esc(o['Broj upita'])}">
       <span class="nrw"><span class="nr">${esc(o['Broj upita'])}</span></span>
       <span><b>${esc(klijent(o))}</b><small>${esc(o['Klijent'] || '')}${o['Naziv firme / udruge'] ? ' · ' + esc(o['Ime i prezime / kontakt osoba']) : ''} · ${esc(o['Vrijeme'] || '')}</small></span>
       <span class="c-usl"><small>${esc(o['Naziv projekta'] || o['Usluge'] || '')}</small><small>${o['Rok isporuke'] ? '📅 ' + esc(hrDate(new Date(o['Rok isporuke'] + 'T12:00'))) : o['Rok'] ? 'Rok: ' + esc(o['Rok']) : ''}${o['Budžet'] ? (o['Rok'] ? ' · ' : '') + 'Budžet: ' + esc(o['Budžet']) : ''}</small></span>
       <span>${stBadge(o)}</span>
-      <span class="amt">${amt ? eur(amt) : ''}</span></button>`;
+      <span class="amt">${amt ? eur(amt) : ''}</span></button></div>`;
   }).join('') : `<div class="empty">Nema upita u ovoj kartici.</div>`;
+  selPaint(L);
 }
-$('#list').onclick = e => { const b = e.target.closest('.it'); if (b) openDrawer(b.dataset.nr); };
+$('#list').onclick = e => { if (e.target.closest('.pick')) return; const b = e.target.closest('.it'); if (b) openDrawer(b.dataset.nr); };
+/* OZNAČAVANJE I BRISANJE VIŠE UPITA */
+const SEL = new Set();
+let VISIBLE = [];
+function selPaint(L) {
+  if (L) VISIBLE = L.map(o => o['Broj upita']);
+  [...SEL].forEach(n => { if (!byNr(n)) SEL.delete(n); });
+  const nv = VISIBLE.filter(n => SEL.has(n)).length;
+  $('#selAll').checked = VISIBLE.length > 0 && nv === VISIBLE.length; $('#selAll').indeterminate = nv > 0 && nv < VISIBLE.length;
+  $('#selN').textContent = SEL.size ? 'Označeno: ' + SEL.size : '';
+  $('#delSel').disabled = !SEL.size; $('#delSel').textContent = '🗑 Obriši označene' + (SEL.size ? ' (' + SEL.size + ')' : '');
+}
+$('#list').addEventListener('change', e => { const c = e.target.closest('.selc'); if (!c) return; c.checked ? SEL.add(c.value) : SEL.delete(c.value); c.closest('.itw').classList.toggle('sel', c.checked); selPaint(); });
+$('#selAll').onchange = e => { VISIBLE.forEach(n => e.target.checked ? SEL.add(n) : SEL.delete(n)); renderList(); };
+$('#delSel').onclick = async () => {
+  const nrs = [...SEL]; if (!nrs.length) return;
+  if (!confirm('Trajno obrisati ' + nrs.length + (nrs.length === 1 ? ' upit' : ' upita') + '?\n' + nrs.join(', ') + '\n\nOvo se ne može vratiti.')) return;
+  const p = prompt('Za potvrdu upiši admin lozinku:'); if (!p) return;
+  $('#delSel').disabled = true; $('#delSel').textContent = 'Brišem…';
+  try { const j = await api({ akcija: 'brisi', nrs, lozinka: p }); D.upiti = D.upiti.filter(o => !SEL.has(o['Broj upita'])); if (OPEN && SEL.has(OPEN)) closeDrawer(); SEL.clear(); if (j.brojac) D.brojac = j.brojac; renderAll(); toast('Obrisano: ' + j.obrisano); }
+  catch (er) { toast(er.message, true); selPaint(); }
+};
 
 /* ====== NALOG ====== */
 function openDrawer(nr) {
@@ -576,7 +616,7 @@ function bindDrawer(o) {
     if (a === 'spremiPl') { const pl = $('#pPl').checked; return save(o, { 'Plaćeno': pl ? 'Da' : 'Ne', 'Datum plaćanja': pl ? ($('#pDat').value || today()) : '', 'Način plaćanja': $('#pNac').value }, pl ? 'Označeno kao plaćeno' : 'Spremljeno'); }
     if (a === 'ispis') return printObr(o);
     if (a === 'spremiTpl') { const t = $('#mTxt').value.trim(); if (!t) return toast('Prvo napiši poruku', true); const n = prompt('Naziv predloška:'); if (!n) return; D.predlosci.push({ n, t: unfill(t, o) }); try { await api({ akcija: 'predlosci', predlosci: D.predlosci }); renderDrawer(o); toast('Predložak spremljen'); } catch (er) { toast(er.message, true); } return; }
-    if (a === 'brisi') { if (!confirm('Trajno obrisati ' + nr + ' (' + klijent(o) + ')?\nOvo se ne može vratiti.')) return; const p = prompt('Za potvrdu upiši admin lozinku:'); if (!p) return; try { await api({ akcija: 'brisi', nr, lozinka: p }); D.upiti = D.upiti.filter(x => x !== o); closeDrawer(); renderAll(); toast('Upit obrisan'); } catch (er) { toast(er.message, true); } }
+    if (a === 'brisi') { if (!confirm('Trajno obrisati ' + nr + ' (' + klijent(o) + ')?\nOvo se ne može vratiti.')) return; const p = prompt('Za potvrdu upiši admin lozinku:'); if (!p) return; try { const j = await api({ akcija: 'brisi', nr, lozinka: p }); if (j.brojac) D.brojac = j.brojac; D.upiti = D.upiti.filter(x => x !== o); closeDrawer(); renderAll(); toast('Upit obrisan'); } catch (er) { toast(er.message, true); } }
   };
   const op = $('#tOpis'); if (op) op.onchange = () => { const S = sessions(o); S[S.length - 1].o = op.value.trim(); save(o, { 'Evidencija rada': JSON.stringify(S) }); };
   $('#pPl').onchange = e => { if (e.target.checked && !$('#pDat').value) $('#pDat').value = today(); };
@@ -686,8 +726,21 @@ ${S.length ? `<div class="box" style="margin-top:16px"><h2>Evidencija rada</h2><
 /* ====== POSTAVKE ====== */
 $('#setBtn').onclick = () => {
   const P = D.postavke; $('#sSat').value = P.satnica; $('#sPdv').checked = !!P.pdv; $('#sStopa').value = P.stopa; $('#sNap').value = P.napomena || '';
-  $('#sStopaW').hidden = !P.pdv; $('#sMsg').textContent = ''; $('#tgMsg').textContent = ''; tgPaint(); $('#setM').hidden = false; $('#sSat').focus();
+  $('#sStopaW').hidden = !P.pdv; $('#sMsg').textContent = ''; $('#tgMsg').textContent = ''; $('#brMsg').textContent = ''; tgPaint(); brPaint(); $('#setM').hidden = false; $('#sSat').focus();
 };
+/* BROJAČ UPITA */
+const brFmt = (g, n) => 'UP-' + g + '-' + String(n).padStart(4, '0');
+function brPaint() {
+  const b = D.brojac; if (!b) { $('#brSt').textContent = 'Podaci o brojaču nisu dostupni (objavi novu verziju skripte).'; return; }
+  $('#brSt').innerHTML = (b.zadnji ? 'Zadnji upit: <b>' + brFmt(b.god, b.zadnji) + '</b>. ' : 'Ove godine još nema upita. ') + 'Sljedeći će biti <b>' + brFmt(b.god, b.sljedeci) + '</b>' + (b.rucno ? ' (ručno postavljeno)' : '') + '.';
+  $('#brOd').value = b.sljedeci;
+}
+$('#brSave').onclick = async () => {
+  const od = num($('#brOd').value); $('#brMsg').className = 'msg'; $('#brMsg').textContent = 'Spremam…';
+  try { const j = await api({ akcija: 'brojac', od }); D.brojac = j.brojac; brPaint(); $('#brMsg').className = 'msg ok'; $('#brMsg').textContent = 'Sljedeći upit dobiva broj ' + brFmt(j.brojac.god, j.brojac.sljedeci) + '.'; }
+  catch (e) { $('#brMsg').className = 'msg bad'; $('#brMsg').textContent = e.message; }
+};
+
 /* TELEGRAM */
 function tgPaint() {
   const t = D.telegram || { bot: '', povezan: false };
