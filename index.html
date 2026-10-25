@@ -108,7 +108,9 @@ section{padding-block:72px}
 
 /* usluge */
 .svc{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--line)}
-.svc h3{color:var(--hot-text)}
+.svc h3{color:var(--ink);transition:color .25s}
+.svc div:hover h3,.step:hover h3,.dev:hover b,.wp:hover h3{color:#0F3A9E}
+.step h3,.dev b,.wp h3{transition:color .25s}
 .svc div{padding:22px 22px 22px 0;border-bottom:1px solid var(--line);display:grid;gap:8px;min-width:0;align-content:start}
 .svc div:not(:nth-child(3n+1)){padding-left:22px;border-left:1px solid var(--line)}
 .svc p{color:var(--muted);font-size:.95rem}
