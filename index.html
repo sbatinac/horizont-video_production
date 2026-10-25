@@ -159,6 +159,61 @@ section{padding-block:72px}
 .cap{position:absolute;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;color:#ccc;font:.85rem var(--mono)}
 .dl{position:absolute;top:calc(18px + env(safe-area-inset-top,0px));left:calc(18px + env(safe-area-inset-left,0px));color:#fff;font-weight:600}
 
+/* VIDEO: kino sekcija s mozaikom */
+#video.cine{background:#07040A;color:#FBF3F5;position:relative;overflow:hidden}
+#video.cine::before{content:"";position:absolute;inset:auto -10% -40% -10%;height:70%;background:radial-gradient(ellipse at center,rgba(255,46,110,.22),transparent 65%);pointer-events:none}
+#video.cine .wrap{position:relative}
+.cine .sec-head p,.cine .lbl{color:#AE9FB0}
+.cine .tab{background:#140D19;border-color:#2C2133;color:#AE9FB0}
+.cine .tab.on{background:var(--grad);color:var(--on-hot);border-color:transparent}
+.cine .btn.ghost{color:#FBF3F5;border-color:#4A3A52}
+.mz{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));grid-auto-rows:112px;grid-auto-flow:dense;gap:10px}
+.mt{position:relative;overflow:hidden;border-radius:12px;border:0;padding:0;margin:0;cursor:pointer;background:#1A1020;color:#fff;text-align:left;font:inherit;grid-row:span 2;
+  opacity:0;transform:translateY(28px) scale(.94);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1);isolation:isolate}
+.mt.in{opacity:1;transform:none}
+.mt.w{grid-column:span 2;grid-row:span 2}
+.mt.t{grid-row:span 3}
+.mt.f{grid-column:span 3;grid-row:span 3}
+.mt .bg{position:absolute;inset:-6%;background:#1A1020 center/cover no-repeat;animation:kb var(--d,16s) ease-in-out var(--dl,0s) infinite alternate;transition:filter .4s}
+@keyframes kb{from{transform:scale(1.02) translate(0,0)}to{transform:scale(1.16) translate(var(--x,3%),var(--y,-2%))}}
+.mt::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(7,4,10,.88));z-index:1;transition:opacity .4s}
+.mt::before{content:"";position:absolute;inset:0;border-radius:12px;padding:2px;background:var(--grad);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .3s;z-index:3;pointer-events:none}
+.mt:hover::before,.mt:focus-visible::before{opacity:1}
+.mt:focus-visible{outline:none}
+.mt:hover .bg{filter:saturate(1.25) brightness(1.08)}
+.mt .pl{position:absolute;z-index:2;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(255,255,255,.16);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-size:1.05rem;padding-left:3px;transition:transform .35s cubic-bezier(.2,.8,.2,1),background .3s,color .3s;box-shadow:0 0 0 1px rgba(255,255,255,.25)}
+.mt:hover .pl,.mt:focus-visible .pl{transform:scale(1.25);background:var(--grad);color:var(--on-hot);box-shadow:0 0 30px rgba(255,46,110,.7)}
+.mt.f .pl{width:72px;height:72px;margin:-36px 0 0 -36px;font-size:1.4rem}
+.mt .meta{position:absolute;left:12px;right:12px;bottom:10px;z-index:2;display:flex;justify-content:space-between;gap:8px;align-items:flex-end}
+.mt .meta b{font:700 .95rem/1.2 var(--display);overflow-wrap:anywhere;text-shadow:0 2px 10px rgba(0,0,0,.6)}
+.mt.f .meta b{font-size:1.3rem}
+.mt .dur{font:500 .7rem var(--mono);background:rgba(0,0,0,.6);padding:3px 6px;border-radius:4px;flex:none}
+.mt.soon{display:flex;align-items:center;justify-content:center;font:500 .7rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#6E5E72;border:1px dashed #3D2E46;background:repeating-linear-gradient(135deg,transparent 0 12px,rgba(255,255,255,.02) 12px 24px);cursor:default;aspect-ratio:auto}
+.mt.soon::before,.mt.soon::after{content:none}
+/* player + okretanje */
+.vwrap{position:relative;width:min(1000px,94vw);aspect-ratio:16/9;max-height:84vh;background:#000;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1px #2C2133,0 40px 120px -20px rgba(255,46,110,.5)}
+.vwrap.tall{width:auto;height:min(84vh,900px);aspect-ratio:9/16;max-width:94vw}
+.modal #mVidEl{position:absolute;inset:0;width:100%;height:100%;max-height:none;border:0;border-radius:0;background:transparent;opacity:0;transition:opacity .45s}
+.modal #mVidEl.on{opacity:1}
+.spin{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 20%,#FF9A1F 60%,#FF2E6E);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 5px));mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 5px));animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#mVid.flipping .vwrap,#mVid.flipping .nv,#mVid.flipping .cap{opacity:0}
+#mVid{transition:background .4s}
+.flip{position:fixed;z-index:101;transform-style:preserve-3d;transform-origin:center;pointer-events:none;will-change:transform}
+.flip .fc,.flip .bc{position:absolute;inset:0;border-radius:inherit;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
+.flip .fc{background:#1A1020 center/cover no-repeat;box-shadow:0 30px 80px -20px rgba(255,46,110,.6)}
+.flip .bc{background:#000;transform:rotateY(180deg);box-shadow:0 0 0 1px #2C2133,0 40px 120px -20px rgba(255,46,110,.5)}
+#vCap{color:#ccc}
+#mVid .nv{z-index:2}
+@media (max-width:700px){#mVid .nv{top:auto;bottom:calc(52px + env(safe-area-inset-bottom,0px));transform:none;width:46px;height:46px}#mVid .nv.l{left:calc(50% - 58px)}#mVid .nv.r{right:calc(50% - 58px)}}
+@media (max-width:700px){
+  .mz{grid-template-columns:1fr 1fr;grid-auto-rows:88px;gap:8px}
+  .mt.f{grid-column:span 2;grid-row:span 3}
+  .mt .pl{width:44px;height:44px;margin:-22px 0 0 -22px}
+  .mt .meta b{font-size:.82rem}
+}
+@media (prefers-reduced-motion:reduce){.mt .bg,.spin{animation:none}.mt{opacity:1;transform:none}}
+
 /* web projekti */
 .webs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 .wp{display:grid;gap:10px;align-content:start;background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px;text-decoration:none;transition:border-color .2s,transform .2s}
@@ -339,10 +394,11 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <div class="more"><button class="btn ghost" id="gMore" hidden>Prikaži još</button></div>
 </div></section>
 
-<section id="video"><div class="wrap">
-  <div class="sec-head"><span class="lbl">Video</span><h2>Showreel i projekti</h2><p>Promotivni videi, animacije i kratke forme za društvene mreže.</p></div>
+<section id="video" class="cine"><div class="wrap">
+  <div class="sec-head"><span class="lbl">Video</span><h2>Showreel i projekti</h2><p>Promotivni videi, animacije i kratke forme za društvene mreže. Kliknite na kadar i pogledajte.</p></div>
   <div class="tabs" id="vTabs"></div>
-  <div class="cards vid" id="vGrid"></div>
+  <div class="mz" id="vGrid"></div>
+  <div class="more"><button class="btn ghost" id="vMore" hidden>Prikaži još videa</button></div>
 </div></section>
 
 <section id="dokumenti" class="alt"><div class="wrap">
@@ -477,7 +533,10 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 </div>
 <div class="modal" id="mVid" role="dialog" aria-label="Video">
   <button class="mx" onclick="closeM('mVid')" aria-label="Zatvori">×</button>
-  <iframe class="v" id="mVidEl" allow="autoplay; fullscreen" allowfullscreen></iframe>
+  <button class="nv l" onclick="vStep(-1)" aria-label="Prethodni video">‹</button>
+  <div class="vwrap" id="vWrap"><span class="spin" aria-hidden="true"></span><iframe id="mVidEl" title="Video" allow="autoplay; fullscreen" allowfullscreen></iframe></div>
+  <button class="nv r" onclick="vStep(1)" aria-label="Sljedeći video">›</button>
+  <div class="cap" id="vCap"></div>
 </div>
 <div class="modal" id="mPdf" role="dialog" aria-label="Dokument">
   <a class="dl" id="mPdfDl" target="_blank" rel="noopener">⬇ Preuzmi</a>
@@ -508,7 +567,7 @@ async function listChildren(folderId) {
   do {
     const q = encodeURIComponent(`'${folderId}' in parents and trashed = false`);
     const url = `https://www.googleapis.com/drive/v3/files?q=${q}&key=${DRIVE_KEY}` +
-      `&fields=nextPageToken,files(id,name,mimeType,createdTime)&pageSize=1000&orderBy=createdTime desc` + (token ? `&pageToken=${token}` : '');
+      `&fields=nextPageToken,files(id,name,mimeType,createdTime,videoMediaMetadata(width,height,durationMillis))&pageSize=1000&orderBy=createdTime desc` + (token ? `&pageToken=${token}` : '');
     const r = await fetch(url);
     if (!r.ok) throw new Error('Drive API ' + r.status);
     const j = await r.json();
@@ -519,7 +578,8 @@ async function listChildren(folderId) {
 // Datoteke u glavnoj mapi = "Ostalo", svaka podmapa = tab
 async function load(type) {
   const ok = MATCH[type];
-  const strip = f => ({ id: f.id, name: f.name.replace(/\.[^.]+$/, ''), date: Date.parse(f.createdTime) });
+  const strip = f => { const m = f.videoMediaMetadata || {};
+    return { id: f.id, name: f.name.replace(/\.[^.]+$/, ''), date: Date.parse(f.createdTime), w: +m.width || 0, h: +m.height || 0, dur: +m.durationMillis || 0 }; };
   const items = await listChildren(FOLDERS[type]);
   const albums = [];
   const root = items.filter(f => ok(f.mimeType)).map(strip);
@@ -553,11 +613,63 @@ function openImg(i) { cur = i; showImg(); $('#mImg').classList.add('open'); }
 function showImg() { const f = gFiles[cur]; $('#mImgEl').src = thumb(f.id, 1920); $('#mImgEl').alt = f.name; $('#mCap').textContent = `${f.name} · ${cur + 1}/${gFiles.length}`; }
 function step(d) { cur = (cur + d + gFiles.length) % gFiles.length; showImg(); }
 
-/* VIDEO */
-function vRender(files) {
-  $('#vGrid').innerHTML = files.map(f => `<button class="card" onclick="openVid('${f.id}')"><span class="th" style="background-image:url('${thumb(f.id, 640)}')"></span><span class="nm">${esc(f.name)}</span></button>`).join('');
+/* VIDEO MOZAIK: oblik pločice prema formatu videa, kadrovi se polako miču, klik = pločica se zavrti i izraste u player */
+const VPAGE = 18, STILL = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let vFiles = [], vShown = 0, vCur = 0;
+const PATTERN = ['w', 'n', 't', 'n', 'n', 'w', 't', 'n', 'w', 'n'];
+function shape(f, i) {
+  if (f.w && f.h) { const r = f.w / f.h; if (r < .8) return 't'; if (r > 1.2) return i === 0 ? 'f' : 'w'; return 'n'; }
+  return i === 0 ? 'f' : PATTERN[i % PATTERN.length];
 }
-function openVid(id) { pauseIntro(); $('#mVidEl').src = `https://drive.google.com/file/d/${id}/preview`; $('#mVid').classList.add('open'); }
+const tall = f => f.w && f.h ? f.h > f.w * 1.2 : false;
+const mmss = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const rnd = (a, b) => (a + Math.random() * (b - a)).toFixed(2);
+const vIO = 'IntersectionObserver' in window && !STILL ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); vIO.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' }) : null;
+function vRender(files) { vFiles = files; vShown = 0; $('#vGrid').innerHTML = ''; vMoreFn(); }
+function vMoreFn() {
+  const next = vFiles.slice(vShown, vShown + VPAGE);
+  $('#vGrid').insertAdjacentHTML('beforeend', next.map((f, k) => { const i = vShown + k;
+    return `<button class="mt ${shape(f, i)}" data-i="${i}" aria-label="Pogledaj video: ${esc(f.name)}" style="--x:${rnd(-4, 4)}%;--y:${rnd(-3, 3)}%;--d:${rnd(12, 20)}s;--dl:-${rnd(0, 10)}s;transition-delay:${(k % 6) * 70}ms">` +
+      `<span class="bg" style="background-image:url('${thumb(f.id, 900)}')"></span><span class="pl" aria-hidden="true">▶</span>` +
+      `<span class="meta"><b>${esc(f.name)}</b>${f.dur ? `<span class="dur">${mmss(f.dur)}</span>` : ''}</span></button>`; }).join(''));
+  $('#vGrid').querySelectorAll('.mt:not(.seen)').forEach(t => { t.classList.add('seen'); vIO ? vIO.observe(t) : t.classList.add('in'); });
+  vShown += next.length; $('#vMore').hidden = vShown >= vFiles.length;
+}
+$('#vMore').onclick = vMoreFn;
+$('#vGrid').addEventListener('click', e => { const t = e.target.closest('.mt[data-i]'); if (t) openVid(+t.dataset.i, t); });
+function vTarget(f) {
+  const vw = innerWidth, vh = innerHeight;
+  let w, h;
+  if (tall(f)) { h = Math.min(vh * .84, 900); w = h * 9 / 16; if (w > vw * .94) { w = vw * .94; h = w * 16 / 9; } }
+  else { w = Math.min(1000, vw * .94); h = w * 9 / 16; if (h > vh * .84) { h = vh * .84; w = h * 16 / 9; } }
+  return { left: (vw - w) / 2, top: (vh - h) / 2, width: w, height: h };
+}
+function vLoad(f) {
+  const ifr = $('#mVidEl'); ifr.classList.remove('on');
+  $('#vWrap').classList.toggle('tall', tall(f));
+  ifr.onload = () => { if (ifr.src !== 'about:blank') ifr.classList.add('on'); };
+  ifr.src = `https://drive.google.com/file/d/${f.id}/preview`;
+  $('#vCap').textContent = `${f.name} · ${vCur + 1}/${vFiles.length}`;
+}
+function openVid(i, tile) {
+  pauseIntro(); vCur = i; const f = vFiles[i], m = $('#mVid');
+  if (STILL || !tile || !tile.animate) { m.classList.add('open'); vLoad(f); return; }
+  const a = tile.getBoundingClientRect(), b = vTarget(f);
+  const fl = document.createElement('div'); fl.className = 'flip';
+  fl.innerHTML = `<span class="fc" style="background-image:url('${thumb(f.id, 900)}')"></span><span class="bc"><span class="spin"></span></span>`;
+  Object.assign(fl.style, { left: b.left + 'px', top: b.top + 'px', width: b.width + 'px', height: b.height + 'px' });
+  document.body.appendChild(fl);
+  m.classList.add('open', 'flipping'); tile.style.visibility = 'hidden';
+  const dx = a.left - b.left, dy = a.top - b.top, sx = a.width / b.width, sy = a.height / b.height;
+  fl.animate([
+    { transform: `translate(${dx}px,${dy}px) scale(${sx},${sy}) rotateY(0deg)`, borderRadius: '14px' },
+    { transform: `translate(${dx * .4}px,${dy * .4}px) scale(${(sx + 1) / 2 * 1.04},${(sy + 1) / 2 * 1.04}) rotateY(110deg)`, offset: .55 },
+    { transform: 'translate(0,0) scale(1,1) rotateY(180deg)', borderRadius: '10px' }
+  ], { duration: 820, easing: 'cubic-bezier(.65,0,.25,1)' }).onfinish = () => {
+    m.classList.remove('flipping'); vLoad(f); tile.style.visibility = ''; requestAnimationFrame(() => fl.remove());
+  };
+}
+function vStep(d) { if (!vFiles.length) return; vCur = (vCur + d + vFiles.length) % vFiles.length; vLoad(vFiles[vCur]); }
 
 /* PDF */
 function pRender(files) {
@@ -573,11 +685,12 @@ function openPdf(id) {
 function closeM(id) {
   $('#' + id).classList.remove('open');
   if (id === 'mPdf') $('#mPdfEl').src = 'about:blank';
-  if (id === 'mVid') $('#mVidEl').src = 'about:blank';
+  if (id === 'mVid') { $('#mVidEl').classList.remove('on'); $('#mVidEl').src = 'about:blank'; }
 }
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') ['mImg', 'mVid', 'mPdf'].forEach(closeM);
   if ($('#mImg').classList.contains('open')) { if (e.key === 'ArrowLeft') step(-1); if (e.key === 'ArrowRight') step(1); }
+  if ($('#mVid').classList.contains('open')) { if (e.key === 'ArrowLeft') vStep(-1); if (e.key === 'ArrowRight') vStep(1); }
 });
 document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeM(m.id); }));
 let tx = 0;
@@ -585,7 +698,10 @@ $('#mImg').addEventListener('touchstart', e => tx = e.touches[0].clientX, { pass
 $('#mImg').addEventListener('touchend', e => { const d = e.changedTouches[0].clientX - tx; if (Math.abs(d) > 50) step(d < 0 ? 1 : -1); });
 
 /* POKRETANJE: mapa nije upisana = prazna mjesta "Uskoro"; upisana a prazna = sekcija se skriva */
-function soon(grid, n) { $(grid).innerHTML = Array.from({ length: n }, () => '<div class="soon">Uskoro</div>').join(''); }
+function soon(grid, n) {
+  if (grid === '#vGrid') { $(grid).innerHTML = ['f', 't', 'n', 'n', 'w', 't', 'n', 'w', 'n'].map(c => `<div class="mt in soon ${c}">Uskoro</div>`).join(''); return; }
+  $(grid).innerHTML = Array.from({ length: n }, () => '<div class="soon">Uskoro</div>').join('');
+}
 function init(type, sec, tabsEl, grid, render, n) {
   if (FOLDERS[type].startsWith('UPISI')) return soon(grid, n);
   $(grid).innerHTML = '<div class="msg">Učitavanje…</div>';
