@@ -103,7 +103,7 @@ main{padding-block:20px 60px;display:grid;gap:18px}
 /* nalog (ladica) */
 .dr-bg{position:fixed;inset:0;background:rgba(4,10,24,.45);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
 .dr-bg.open{opacity:1;pointer-events:auto}
-.drawer{position:fixed;top:0;right:0;bottom:0;width:min(760px,100%);background:var(--surface);z-index:41;transform:translateX(102%);visibility:hidden;transition:transform .25s cubic-bezier(.2,.8,.2,1),visibility 0s .25s;display:flex;flex-direction:column;box-shadow:-30px 0 80px -30px rgba(4,10,24,.5)}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(920px,100%);background:var(--surface);z-index:41;transform:translateX(102%);visibility:hidden;transition:transform .25s cubic-bezier(.2,.8,.2,1),visibility 0s .25s;display:flex;flex-direction:column;box-shadow:-30px 0 80px -30px rgba(4,10,24,.5)}
 .drawer.open{transform:none;visibility:visible;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
 .dr-h{background:var(--navy);color:#fff;padding:14px 18px;display:flex;gap:12px;align-items:center}
 .dr-h h2{font-size:1.15rem}
@@ -145,6 +145,11 @@ dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;overflow-wrap:anywhere}
 .tot span:nth-child(odd){justify-self:start;font-family:var(--body);color:var(--muted)}
 .tot .grand{font:800 1.5rem var(--display);color:var(--blue-ink)}
 .note{font-size:.82rem;color:var(--muted);font-style:italic}
+.items select{padding:7px 6px;min-width:130px}.items .id{min-width:110px}.items .in{min-width:150px}
+.items tr.trosak td{background:#FFF8E8}.items input:disabled{background:#F1F3F8;border-color:#E3E8F1}
+.tot .int{color:var(--muted);font-size:.88rem}.tot span.int:nth-of-type(odd){padding-top:6px}
+.tot .zar{color:var(--ok);font-weight:700;font-size:1rem}.tot .zar.neg{color:var(--bad)}
+.btn.del{background:var(--bad);color:#fff}.btn.del:hover{box-shadow:0 8px 22px -10px rgba(192,18,63,.8)}
 .paid{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px;border-radius:10px;background:var(--surface)}
 .paid.yes{background:var(--ok-soft)}
 .chk{display:flex;gap:8px;align-items:center;font-weight:600;cursor:pointer}
@@ -297,9 +302,11 @@ const satnica = o => o['Satnica (€)'] !== undefined && o['Satnica (€)'] !== 
 const sati = o => o['Sati rada'] !== undefined && o['Sati rada'] !== '' ? num(o['Sati rada']) : q15(workedMs(sessions(o)));
 function calc(o, ov = {}) {
   const st = ov.satnica ?? satnica(o), h = ov.sati ?? sati(o), its = ov.items ?? items(o);
-  const rad = st * h, ost = its.reduce((a, x) => a + num(x.q) * num(x.c), 0);
+  const bill = its.filter(x => x.v !== 'trosak');
+  const rad = st * h, ost = bill.reduce((a, x) => a + num(x.q) * num(x.c), 0);
+  const tr = its.reduce((a, x) => a + num(x.q) * num(x.v === 'trosak' ? (x.nab || x.c) : x.nab), 0);
   const pdv = D.postavke.pdv, osn = rad + ost, vat = pdv ? osn * num(D.postavke.stopa) / 100 : 0;
-  return { st, h, its, rad, ost, osn, vat, uk: osn + vat };
+  return { st, h, its, bill, rad, ost, osn, vat, uk: osn + vat, tr, zar: osn - tr };
 }
 const status = o => o['Status'] || 'Novo';
 const placeno = o => o['Plaćeno'] === 'Da';
@@ -315,11 +322,12 @@ function renderKpis() {
   const satiM = U.reduce((a, o) => a + workedMs(sessions(o), m0), 0);
   const plM = U.filter(o => placeno(o) && o['Datum plaćanja'] && new Date(o['Datum plaćanja']).getTime() >= m0).reduce((a, o) => a + num(o['Ukupno (€)']), 0);
   const duguje = U.filter(o => status(o) === 'Završeno' && !placeno(o)).reduce((a, o) => a + num(o['Ukupno (€)']), 0);
+  const zarM = U.filter(o => placeno(o) && o['Datum plaćanja'] && new Date(o['Datum plaćanja']).getTime() >= m0).reduce((a, o) => a + (o['Zarada (€)'] !== undefined && o['Zarada (€)'] !== '' ? num(o['Zarada (€)']) : num(o['Ukupno bez PDV-a (€)'] || o['Ukupno (€)'])), 0);
   const t = today(), pos = D.posjete.find(p => p['Datum'] === t), p7 = D.posjete.slice(-7).reduce((a, p) => a + num(p['Posjete']), 0);
   const live = U.filter(running).length;
   const K = [['Novi upiti', novi, 'čekaju odgovor', novi ? 'hot' : ''], ['U radu', rad, live ? '● štoperica radi (' + live + ')' : 'otvoreni nalozi', ''],
     ['Odrađeno ovaj mjesec', hm(satiM), 'evidentirano', ''], ['Naplaćeno ovaj mjesec', eur(plM), D.postavke.pdv ? 's PDV-om' : 'bez PDV-a', 'gold'],
-    ['Nenaplaćeno', eur(duguje), 'završeni, nisu plaćeni', duguje ? 'gold' : ''], ['Posjete', (pos ? num(pos['Posjete']) : 0) + ' / ' + p7, 'danas / 7 dana', '']];
+    ['Zarada ovaj mjesec', eur(zarM), 'naplaćeno − troškovi', 'hot'], ['Nenaplaćeno', eur(duguje), 'završeni, nisu plaćeni', duguje ? 'gold' : ''], ['Posjete', (pos ? num(pos['Posjete']) : 0) + ' / ' + p7, 'danas / 7 dana', '']];
   $('#kpis').innerHTML = K.map(k => `<div class="kpi ${k[3]}"><span class="lbl">${k[0]}</span><b>${esc(k[1])}</b><small>${esc(k[2])}</small></div>`).join('');
 }
 
@@ -396,6 +404,7 @@ function renderDrawer(o) {
       ${s === 'Završeno' ? `<button type="button" class="btn ghost" data-a="vrati">↺ Vrati u rad</button>` : ''}
       ${s === 'Odbijeno' ? `<button type="button" class="btn ghost" data-a="vrati">↺ Vrati u rad</button>` : ''}
       <button type="button" class="btn ghost" data-a="ispis">🖨 Ispis obračuna</button>
+      <button type="button" class="btn del" data-a="brisi" style="margin-left:auto">🗑 Obriši ${s === 'Novo' ? 'upit' : 'nalog'}</button>
     </div>
     <dl class="kv">${row('Zaprimljeno', o['Vrijeme'])}${row('Otvoreno', o['Otvoreno'])}${row('Završeno', o['Završeno'])}</dl>
   </section>
@@ -442,10 +451,10 @@ function renderDrawer(o) {
       <label class="f">Cijena sata (€)<input type="number" id="oSat" min="0" step="1" value="${c.st}"></label>
       <label class="f">Sati rada<input type="number" id="oSati" min="0" step="0.25" value="${o['Sati rada'] ?? ''}" placeholder="${q15(workedMs(S))}"><span class="note" style="font-weight:400">Prazno = iz evidencije, zaokruženo na 15 min.</span></label>
     </div>
-    <div style="overflow:auto"><table class="items"><thead><tr><th>Dodatna stavka</th><th>Kol.</th><th>Cijena / kom</th><th style="text-align:right">Iznos</th><th></th></tr></thead><tbody id="itB">
+    <div style="overflow:auto"><table class="items"><thead><tr><th>Stavka</th><th>Vrsta</th><th>Dobavljač</th><th>Nabavna / kom</th><th>Kol.</th><th>Prodajna / kom</th><th style="text-align:right">Klijentu</th><th></th></tr></thead><tbody id="itB">
       ${c.its.map(x => itemRow(x)).join('')}
     </tbody></table></div>
-    <div class="acts"><button type="button" class="btn ghost sm" data-a="addItem">+ Dodaj stavku</button><span class="note">npr. glazbena licenca, dron, putni trošak, najam opreme</span></div>
+    <div class="acts"><button type="button" class="btn ghost sm" data-a="addItem">+ Dodaj stavku</button><span class="note"><b>Naplata klijentu</b>: ulazi u račun (npr. licenca, dron). <b>Interni trošak</b>: samo za tvoju evidenciju (npr. gorivo, pretplata), klijent ga ne vidi.</span></div>
     <div class="tot" id="tot"></div>
     <p class="note" id="pdvNote" style="margin:0"></p>
     <div class="acts"><button type="button" class="btn" data-a="spremiObr">Spremi obračun</button></div>
@@ -474,31 +483,40 @@ function renderDrawer(o) {
     <p class="note" style="margin:0">Viber ne podržava unaprijed upisan tekst prema broju: tekst se kopira, otvori se razgovor, samo zalijepiš.</p>
   </section>
 
-  <section class="sec">
-    <h3 style="color:var(--bad)">Opasna zona</h3>
-    <div class="acts"><button type="button" class="btn red sm" data-a="brisi">Trajno obriši upit</button></div>
-  </section>`;
+`;
   updCalc();
   bindDrawer(o);
 }
 
-function itemRow(x = { n: '', q: 1, c: '' }) {
-  return `<tr><td><input class="in" value="${esc(x.n)}" placeholder="Opis stavke"></td><td><input class="iq n" type="number" min="0" step="1" value="${esc(x.q)}"></td><td><input class="ic c" type="number" min="0" step="0.01" value="${esc(x.c)}"></td><td class="r ia"></td><td><button type="button" class="x" aria-label="Ukloni stavku">✕</button></td></tr>`;
+const VRSTE = { naplata: 'Naplata klijentu', trosak: 'Interni trošak' };
+function itemRow(x = { n: '', v: 'naplata', d: '', nab: '', q: 1, c: '' }) {
+  const v = x.v || 'naplata';
+  return `<tr class="${v === 'trosak' ? 'trosak' : ''}"><td><input class="in" value="${esc(x.n)}" placeholder="Opis stavke"></td>
+    <td><select class="iv">${Object.keys(VRSTE).map(k => `<option value="${k}"${k === v ? ' selected' : ''}>${VRSTE[k]}</option>`).join('')}</select></td>
+    <td><input class="id" value="${esc(x.d || '')}" placeholder="npr. Artlist"></td>
+    <td><input class="inab c" type="number" min="0" step="0.01" value="${esc(x.nab ?? '')}" placeholder="0,00"></td>
+    <td><input class="iq n" type="number" min="0" step="1" value="${esc(x.q)}"></td>
+    <td><input class="ic c" type="number" min="0" step="0.01" value="${esc(v === 'trosak' ? '' : x.c)}"${v === 'trosak' ? ' disabled placeholder="—"' : ''}></td>
+    <td class="r ia"></td><td><button type="button" class="x" aria-label="Ukloni stavku">✕</button></td></tr>`;
 }
 function readCalc() {
   const o = byNr(OPEN), S = sessions(o);
-  const its = [...document.querySelectorAll('#itB tr')].map(tr => ({ n: tr.querySelector('.in').value.trim(), q: num(tr.querySelector('.iq').value), c: num(tr.querySelector('.ic').value) })).filter(x => x.n || x.c);
+  const its = [...document.querySelectorAll('#itB tr')].map(tr => { const v = tr.querySelector('.iv').value;
+    return { n: tr.querySelector('.in').value.trim(), v, d: tr.querySelector('.id').value.trim(), nab: num(tr.querySelector('.inab').value), q: num(tr.querySelector('.iq').value), c: v === 'trosak' ? 0 : num(tr.querySelector('.ic').value) }; })
+    .filter(x => x.n || x.c || x.nab);
   const sv = $('#oSati').value.trim();
   return { satnica: num($('#oSat').value), sati: sv === '' ? q15(workedMs(S)) : num(sv), satiRaw: sv, items: its };
 }
 function updCalc() {
   const o = byNr(OPEN); if (!o || !$('#tot')) return;
   const v = readCalc(), c = calc(o, v);
-  document.querySelectorAll('#itB tr').forEach(tr => { tr.querySelector('.ia').textContent = eur(num(tr.querySelector('.iq').value) * num(tr.querySelector('.ic').value)); });
+  document.querySelectorAll('#itB tr').forEach(tr => { const tr_ = tr.querySelector('.iv').value === 'trosak'; tr.classList.toggle('trosak', tr_); const ic = tr.querySelector('.ic'); ic.disabled = tr_; if (tr_) ic.value = '';
+    tr.querySelector('.ia').textContent = tr_ ? '—' : eur(num(tr.querySelector('.iq').value) * num(ic.value)); });
   $('#tot').innerHTML = `<span>Rad: ${String(c.h).replace('.', ',')} h × ${eur(c.st)}</span><span>${eur(c.rad)}</span>` +
-    (c.its.length ? `<span>Dodatne stavke</span><span>${eur(c.ost)}</span>` : '') +
+    (c.bill.length ? `<span>Dodatne stavke</span><span>${eur(c.ost)}</span>` : '') +
     (D.postavke.pdv ? `<span>Osnovica</span><span>${eur(c.osn)}</span><span>PDV ${D.postavke.stopa} %</span><span>${eur(c.vat)}</span>` : '') +
-    `<span>Ukupno za naplatu</span><span class="grand">${eur(c.uk)}</span>`;
+    `<span>Ukupno za naplatu</span><span class="grand">${eur(c.uk)}</span>` +
+    `<span class="int">Troškovi (interno, nabava)</span><span class="int">− ${eur(c.tr)}</span><span class="int"><b>Zarada</b> (bez PDV-a)</span><span class="int zar${c.zar < 0 ? ' neg' : ''}">${eur(c.zar)}</span>`;
   $('#pdvNote').textContent = D.postavke.pdv ? '' : (D.postavke.napomena || '');
 }
 
@@ -536,14 +554,15 @@ function bindDrawer(o) {
     if (a === 'spremiPl') { const pl = $('#pPl').checked; return save(o, { 'Plaćeno': pl ? 'Da' : 'Ne', 'Datum plaćanja': pl ? ($('#pDat').value || today()) : '', 'Način plaćanja': $('#pNac').value }, pl ? 'Označeno kao plaćeno' : 'Spremljeno'); }
     if (a === 'ispis') return printObr(o);
     if (a === 'spremiTpl') { const t = $('#mTxt').value.trim(); if (!t) return toast('Prvo napiši poruku', true); const n = prompt('Naziv predloška:'); if (!n) return; D.predlosci.push({ n, t: unfill(t, o) }); try { await api({ akcija: 'predlosci', predlosci: D.predlosci }); renderDrawer(o); toast('Predložak spremljen'); } catch (er) { toast(er.message, true); } return; }
-    if (a === 'brisi') { const p = prompt('Za trajno brisanje upita ' + nr + ' upiši admin lozinku:'); if (!p) return; try { await api({ akcija: 'brisi', nr, lozinka: p }); D.upiti = D.upiti.filter(x => x !== o); closeDrawer(); renderAll(); toast('Upit obrisan'); } catch (er) { toast(er.message, true); } }
+    if (a === 'brisi') { if (!confirm('Trajno obrisati ' + nr + ' (' + klijent(o) + ')?\nOvo se ne može vratiti.')) return; const p = prompt('Za potvrdu upiši admin lozinku:'); if (!p) return; try { await api({ akcija: 'brisi', nr, lozinka: p }); D.upiti = D.upiti.filter(x => x !== o); closeDrawer(); renderAll(); toast('Upit obrisan'); } catch (er) { toast(er.message, true); } }
   };
   const op = $('#tOpis'); if (op) op.onchange = () => { const S = sessions(o); S[S.length - 1].o = op.value.trim(); save(o, { 'Evidencija rada': JSON.stringify(S) }); };
   $('#pPl').onchange = e => { if (e.target.checked && !$('#pDat').value) $('#pDat').value = today(); };
 }
 function obrPolja(v, c) {
   return { 'Satnica (€)': v.satnica, 'Sati rada': v.satiRaw === '' ? '' : v.sati, 'Obračunati sati': c.h, 'Stavke': JSON.stringify(v.items),
-    'Stavke (opis)': v.items.map(x => `${x.n} × ${x.q} à ${r2(x.c)} €`).join('; '), 'Rad (€)': r2(c.rad), 'Ukupno bez PDV-a (€)': r2(c.osn), 'PDV (€)': r2(c.vat), 'Ukupno (€)': r2(c.uk) };
+    'Stavke (opis)': v.items.map(x => `${x.n} [${VRSTE[x.v] || VRSTE.naplata}${x.d ? ', ' + x.d : ''}${x.nab ? ', nabavna ' + r2(x.nab) + ' €' : ''}] × ${x.q}${x.v === 'trosak' ? '' : ' à ' + r2(x.c) + ' €'}`).join('; '),
+    'Rad (€)': r2(c.rad), 'Ukupno bez PDV-a (€)': r2(c.osn), 'PDV (€)': r2(c.vat), 'Ukupno (€)': r2(c.uk), 'Troškovi (€)': r2(c.tr), 'Zarada (€)': r2(c.zar) };
 }
 
 /* ====== PORUKE ====== */
@@ -578,7 +597,7 @@ function printObr(o) {
   if (OPEN === o['Broj upita'] && $('#oSat')) Object.assign(v, readCalc());
   const c = calc(o, v), S = sessions(o), firma = o['Naziv firme / udruge'];
   const row = (k, val) => val ? `<tr><td>${esc(k)}</td><td>${esc(val)}</td></tr>` : '';
-  const lines = [[`Rad (${String(c.h).replace('.', ',')} h)`, String(c.h).replace('.', ','), eur(c.st), eur(c.rad)]].concat(c.its.map(x => [x.n, String(x.q), eur(x.c), eur(x.q * x.c)]));
+  const lines = [[`Rad (${String(c.h).replace('.', ',')} h)`, String(c.h).replace('.', ','), eur(c.st), eur(c.rad)]].concat(c.bill.map(x => [x.n, String(x.q), eur(x.c), eur(x.q * x.c)]));
   const w = window.open('', '_blank'); if (!w) return toast('Dopusti skočne prozore za ispis', true);
   w.document.write(`<!doctype html><html lang="hr"><head><meta charset="utf-8"><title>Obračun ${esc(o['Broj upita'])}</title>
 <style>@page{size:A4;margin:16mm}body{font:10.5pt/1.5 Arial,Helvetica,sans-serif;color:#0B1424;margin:0}
