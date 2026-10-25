@@ -60,7 +60,7 @@ nav a{text-decoration:none;color:var(--muted)} nav a:hover{color:var(--ink)}
 
 /* banner: intro video */
 .banner{background:#000;position:relative;line-height:0;display:flex;justify-content:center}
-.banner video{display:block;width:100%;max-width:1172px;height:auto;max-height:min(78vh,784px);object-fit:contain;background:#000}
+.banner video{display:block;width:100%;height:auto;aspect-ratio:1920/1070;max-height:min(80vh,1070px);object-fit:cover;object-position:50% 60%;background:#000}
 .banner::after{content:none}
 .vctl{position:absolute;right:max(16px,env(safe-area-inset-right,0px));bottom:18px;z-index:2;display:flex;gap:8px;line-height:1}
 .vbtn{background:rgba(11,7,16,.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid #4A3A52;color:#FBF3F5;font:600 .85rem var(--body);padding:8px 14px;border-radius:999px;cursor:pointer}
@@ -303,7 +303,7 @@ section{padding-block:72px}
 .k-share{display:grid;gap:8px;padding-top:18px;border-top:1px solid var(--line)}
 .k-sh-t{color:var(--muted);font-size:.95rem}
 .k-logo{display:grid;gap:18px;justify-items:center;text-align:center}
-.k-logo img{width:100%;max-width:420px;height:auto;border-radius:12px;background:#000;box-shadow:0 30px 80px -40px rgba(255,46,110,.6)}
+.k-logo img{width:100%;max-width:560px;height:auto;border-radius:12px;background:#000;box-shadow:0 30px 80px -40px rgba(255,46,110,.6)}
 .k-logo .slog{font:800 clamp(1.7rem,3.6vw,2.6rem)/1.05 var(--display);letter-spacing:-.02em}
 
 footer{border-top:1px solid var(--line);padding-block:28px;color:var(--muted);font-size:.85rem;margin-top:72px}
@@ -355,7 +355,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 </div></header>
 
 <div class="banner">
-  <video id="intro" src="intro.mp4" poster="intro-poster.webp" muted playsinline preload="auto" width="1172" height="784" aria-label="Animirani logotip Horizont LHB – video produkcija: sunce na horizontu i natpis"></video>
+  <video id="intro" src="intro.mp4" poster="intro-poster.webp" muted playsinline preload="auto" width="1920" height="1070" aria-label="Animirani uvod Horizont LHB d.o.o. – video produkcija: grad u sumrak, filmska vrpca oko slova H i natpis"></video>
   <div class="vctl">
     <button type="button" class="vbtn" id="vSound" aria-pressed="false">🔊 Uključi zvuk</button>
     <button type="button" class="vbtn" id="vAgain">↻ Ponovi</button>
@@ -557,7 +557,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       </div>
     </div>
     <div class="k-logo">
-      <img src="logo.webp" alt="Horizont LHB – video produkcija" width="640" height="640">
+      <img src="logo-video.webp" alt="Horizont LHB d.o.o. – video produkcija" width="1400" height="788" loading="lazy">
       <p class="slog">Snimljeno. Montirano. <span class="gt">Viđeno.</span></p>
     </div>
   </div>
