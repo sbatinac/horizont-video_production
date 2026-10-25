@@ -149,6 +149,7 @@ dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;overflow-wrap:anywhere}
 .items tr.trosak td{background:#FFF8E8}.items input:disabled{background:#F1F3F8;border-color:#E3E8F1}
 .tot .int{color:var(--muted);font-size:.88rem}.tot span.int:nth-of-type(odd){padding-top:6px}
 .tot .zar{color:var(--ok);font-weight:700;font-size:1rem}.tot .zar.neg{color:var(--bad)}
+.tgbox{border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px}
 .btn.del{background:var(--bad);color:#fff}.btn.del:hover{box-shadow:0 8px 22px -10px rgba(192,18,63,.8)}
 .paid{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px;border-radius:10px;background:var(--surface)}
 .paid.yes{background:var(--ok-soft)}
@@ -238,6 +239,13 @@ dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;overflow-wrap:anywhere}
     <label class="f">Napomena na obračunu<textarea id="sNap" rows="3"></textarea></label>
     <div class="acts"><button type="button" class="btn" id="sSave">Spremi</button><button type="button" class="btn ghost" id="sCancel">Odustani</button></div>
     <p class="msg" id="sMsg"></p>
+    <div class="tgbox">
+      <h3 style="font-size:1rem">Telegram obavijesti</h3>
+      <p class="note" style="margin:0" id="tgSt">Nije postavljeno.</p>
+      <div id="tgSet" class="acts" style="align-items:end"><label class="f" style="flex:1 1 260px">Token bota (iz @BotFather – zaseban bot za video)<input id="tgTok" placeholder="123456789:AAH…" autocomplete="off"></label><button type="button" class="btn ghost" id="tgSave">Spremi token</button></div>
+      <div class="acts" id="tgAct" hidden><button type="button" class="btn blue" id="tgLink">🔗 Poveži</button><button type="button" class="btn ghost" id="tgTest">📨 Probna poruka</button><button type="button" class="btn red sm" id="tgOff">Isključi</button></div>
+      <p class="msg" id="tgMsg"></p>
+    </div>
   </div>
 </div>
 
@@ -275,7 +283,7 @@ async function load() {
   D.upiti = toObjs(j.upiti).reverse();
   D.posjete = toObjs(j.posjete);
   D.postavke = Object.assign({ satnica: 100, pdv: false, stopa: 25, napomena: '' }, j.postavke || {});
-  D.predlosci = j.predlosci || [];
+  D.predlosci = j.predlosci || []; D.telegram = j.telegram || { bot: '', povezan: false };
   $('#sheetLink').href = j.tablica || '#';
   renderAll();
   if (OPEN) { const o = byNr(OPEN); o ? openDrawer(o.nr_) : closeDrawer(); }
@@ -678,8 +686,21 @@ ${S.length ? `<div class="box" style="margin-top:16px"><h2>Evidencija rada</h2><
 /* ====== POSTAVKE ====== */
 $('#setBtn').onclick = () => {
   const P = D.postavke; $('#sSat').value = P.satnica; $('#sPdv').checked = !!P.pdv; $('#sStopa').value = P.stopa; $('#sNap').value = P.napomena || '';
-  $('#sStopaW').hidden = !P.pdv; $('#sMsg').textContent = ''; $('#setM').hidden = false; $('#sSat').focus();
+  $('#sStopaW').hidden = !P.pdv; $('#sMsg').textContent = ''; $('#tgMsg').textContent = ''; tgPaint(); $('#setM').hidden = false; $('#sSat').focus();
 };
+/* TELEGRAM */
+function tgPaint() {
+  const t = D.telegram || { bot: '', povezan: false };
+  $('#tgSt').innerHTML = !t.bot ? 'U Telegramu otvori <b>@BotFather</b> → /newbot i napravi zasebnog bota za video (npr. Horizont Video), pa zalijepi njegov token.' : t.povezan ? '✅ Povezano s botom <b>@' + esc(t.bot) + '</b>. Za svaki novi upit stiže poruka s gumbima Admin i WhatsApp.' : 'Bot <b>@' + esc(t.bot) + '</b> je spremljen. U Telegramu mu pošalji bilo koju poruku (npr. /start), pa ovdje klikni <b>Poveži</b>.';
+  $('#tgSet').hidden = !!t.bot; $('#tgAct').hidden = !t.bot; $('#tgTest').hidden = !t.povezan;
+}
+const tgMsg = (m, c) => { $('#tgMsg').className = 'msg' + (c ? ' ' + c : ''); $('#tgMsg').textContent = m; };
+async function tgDo(op) { const j = await api(Object.assign({ akcija: 'tg' }, op)); if (j.telegram) D.telegram = j.telegram; tgPaint(); return j; }
+$('#tgSave').onclick = async () => { tgMsg('Provjeravam token…'); try { await tgDo({ op: 'token', token: $('#tgTok').value }); $('#tgTok').value = ''; tgMsg('Token spremljen. Pošalji botu poruku u Telegramu, pa klikni Poveži.', 'ok'); } catch (e) { tgMsg(e.message, 'bad'); } };
+$('#tgLink').onclick = async () => { tgMsg('Povezujem…'); try { await tgDo({ op: 'povezi' }); tgMsg('Povezano! Provjeri Telegram.', 'ok'); } catch (e) { tgMsg(e.message, 'bad'); } };
+$('#tgTest').onclick = async () => { tgMsg('Šaljem…'); try { await tgDo({ op: 'test' }); tgMsg('Poslano! Provjeri Telegram.', 'ok'); } catch (e) { tgMsg(e.message, 'bad'); } };
+$('#tgOff').onclick = async () => { if (!confirm('Isključiti Telegram obavijesti?')) return; try { await tgDo({ op: 'iskljuci' }); tgMsg('Isključeno.', 'ok'); } catch (e) { tgMsg(e.message, 'bad'); } };
+
 $('#sPdv').onchange = e => { $('#sStopaW').hidden = !e.target.checked; };
 $('#sCancel').onclick = () => $('#setM').hidden = true;
 $('#setM').onclick = e => { if (e.target.id === 'setM') $('#setM').hidden = true; };

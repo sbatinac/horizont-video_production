@@ -13,6 +13,7 @@ const TEL = '091/358 4122';
 const WEB = 'https://sbatinac.github.io/horizont-video_production/';
 const TZ = 'Europe/Zagreb';
 const BOJA = '#0B1E44';
+const TG_TOKEN = ''; // može ostati prazno: token se upisuje u adminu (⚙ Postavke → Telegram)
 
 const POLJA = [
   ['nr', 'Broj upita'], ['vrijeme', 'Vrijeme'], ['tip', 'Klijent'], ['firma', 'Naziv firme / udruge'], ['oib', 'OIB'],
@@ -46,6 +47,7 @@ function doPost(e) {
         body: POLJA.filter(p => d[p[0]]).map(p => p[1] + ': ' + d[p[0]]).join('\n') + '\n\nOdgovori direktno na ovaj mail (ide klijentu).\nAdmin: ' + WEB + 'admin.html\nTablica: ' + ss.getUrl()
       });
     } catch (err) { console.warn(err); }
+    try { tgNovo_(d); } catch (err) { console.warn(err); }
     try {
       MailApp.sendEmail({ to: d.email, name: NAZIV, replyTo: NOTIFY_EMAIL, subject: 'Primili smo Vaš upit ' + d.nr + ' – Horizont video produkcija', htmlBody: potvrda_(d), body: 'Hvala! Zaprimili smo Vaš upit ' + d.nr + '. Javljamo se uskoro. ' + TEL });
     } catch (err) { console.warn(err); }
@@ -69,7 +71,7 @@ function admin_(d) {
   const props = PropertiesService.getScriptProperties();
   if (d.akcija === 'podaci') {
     return { ok: true, upiti: table_(SHEET_NAME), posjete: table_(SHEET_POSJETE), postavke: postavke_(),
-      predlosci: JSON.parse(props.getProperty('predlosci') || '[]'), tablica: ss_().getUrl() };
+      predlosci: JSON.parse(props.getProperty('predlosci') || '[]'), tablica: ss_().getUrl(), telegram: tgInfo_() };
   }
   if (d.akcija === 'postavke') {
     const P = d.postavke || {};
@@ -77,6 +79,7 @@ function admin_(d) {
     props.setProperty('postavke', JSON.stringify(o));
     return { ok: true, postavke: o };
   }
+  if (d.akcija === 'tg') return tgAdmin_(d);
   if (d.akcija === 'predlosci') {
     const L = (Array.isArray(d.predlosci) ? d.predlosci : []).slice(0, 40).map(x => ({ n: String(x.n || '').slice(0, 80), t: String(x.t || '').slice(0, 2000) })).filter(x => x.n && x.t);
     props.setProperty('predlosci', JSON.stringify(L));
@@ -201,6 +204,60 @@ function hit_() {
   } finally { lock.releaseLock(); }
 }
 
+// ===== TELEGRAM (zaseban bot za video, odvojeno od servisa) =====
+function tgProps_() { return PropertiesService.getScriptProperties(); }
+function tgApi_(metoda, payload) {
+  const t = tgProps_().getProperty('tg_token') || TG_TOKEN; if (!t) throw new Error('Telegram bot nije postavljen.');
+  const r = UrlFetchApp.fetch('https://api.telegram.org/bot' + t + '/' + metoda, { method: 'post', contentType: 'application/json', payload: JSON.stringify(payload || {}), muteHttpExceptions: true });
+  const j = JSON.parse(r.getContentText() || '{}'); if (!j.ok) throw new Error('Telegram: ' + (j.description || r.getResponseCode())); return j.result;
+}
+function tgInfo_() { const p = tgProps_(); if (!p.getProperty('tg_bot') && TG_TOKEN && !p.getProperty('tg_token')) { try { p.setProperty('tg_bot', tgApi_('getMe').username || ''); } catch (e) {} } return { bot: p.getProperty('tg_bot') || '', povezan: !!p.getProperty('tg_chat') }; }
+function tgZadnjiChat_() { const up = tgApi_('getUpdates', { limit: 50 }) || []; const m = up.map(u => u.message || u.edited_message || u.my_chat_member).filter(x => x && x.chat).pop(); return m ? String(m.chat.id) : ''; }
+function tg_(txt, gumbi) {
+  const chat = tgProps_().getProperty('tg_chat'); if (!chat) return;
+  const body = { chat_id: chat, text: String(txt).slice(0, 3800), parse_mode: 'HTML', disable_web_page_preview: true };
+  if (gumbi && gumbi.length) body.reply_markup = { inline_keyboard: [gumbi] };
+  tgApi_('sendMessage', body);
+}
+function tgAdmin_(d) {
+  const p = tgProps_();
+  try {
+    if (d.op === 'token') {
+      const tok = String(d.token || '').trim(); if (!/^\d+:[\w-]{20,}$/.test(tok)) return { ok: false, error: 'Token ne izgleda ispravno (oblik 123456789:ABC…).' };
+      p.setProperty('tg_token', tok); p.deleteProperty('tg_chat');
+      try { const me = tgApi_('getMe'); p.setProperty('tg_bot', me.username || ''); } catch (e) { p.deleteProperty('tg_token'); return { ok: false, error: 'Telegram ne prihvaća token. Provjeri ga u BotFatheru.' }; }
+      return { ok: true, telegram: tgInfo_() };
+    }
+    if (d.op === 'povezi') {
+      const chat = (d.chat && /^-?\d+$/.test(String(d.chat).trim())) ? String(d.chat).trim() : tgZadnjiChat_();
+      if (!chat) return { ok: false, error: 'Bot još nije dobio poruku. U Telegramu otvori @' + (p.getProperty('tg_bot') || 'bot') + ', pošalji mu bilo koju poruku (npr. /start) pa opet klikni Poveži.' };
+      p.setProperty('tg_chat', chat);
+      tg_('✅ <b>Povezano!</b>\nOvdje stižu obavijesti o novim upitima za <b>video produkciju</b>.');
+      return { ok: true, telegram: tgInfo_() };
+    }
+    if (d.op === 'test') { if (!p.getProperty('tg_chat')) return { ok: false, error: 'Telegram još nije povezan.' }; tg_('🎬 <b>Novi upit! (proba)</b>\nHorizont video produkcija', [{ text: 'Otvori admin', url: WEB + 'admin.html' }]); return { ok: true }; }
+    if (d.op === 'iskljuci') { ['tg_token', 'tg_chat', 'tg_bot'].forEach(k => p.deleteProperty(k)); return { ok: true, telegram: { bot: '', povezan: false } }; }
+  } catch (e) { return { ok: false, error: e.message }; }
+  return { ok: false, error: 'Nepoznata akcija.' };
+}
+function tgNovo_(d) {
+  if (!tgProps_().getProperty('tg_chat')) return;
+  const h = s => esc_(s);
+  const L = ['🎬 <b>Novi upit ' + h(d.nr) + '</b>', '<b>' + h(d.firma || d.ime) + '</b>' + (d.firma ? ' · ' + h(d.ime) : '') + (d.tip ? ' (' + h(d.tip) + ')' : ''),
+    d.telefon ? '📞 ' + h(d.telefon) : '', d.email ? '✉️ ' + h(d.email) : '', d.usluge ? '🎯 ' + h(d.usluge) : '', d.rok ? '📅 Rok: ' + h(hrDatum_(d.rok)) : '', d.budzet ? '💶 ' + h(d.budzet) : '',
+    d.kontakt_nacin ? '💬 ' + h(d.kontakt_nacin) + (d.kontakt_kada ? ' · ' + h(d.kontakt_kada) : '') : '', d.opis ? '\n' + h(String(d.opis).slice(0, 600)) : ''];
+  const tel = intl_(d.telefon), G = [{ text: '📂 Admin', url: WEB + 'admin.html' }];
+  if (tel) G.push({ text: 'WhatsApp', url: 'https://wa.me/' + tel });
+  tg_(L.filter(String).join('\n'), G);
+}
+
+// Ručno (▶ Pokreni) nakon što botu pošalješ poruku: poveže chat i pošalje probu.
+function testTelegram() {
+  const chat = tgZadnjiChat_(); if (chat) tgProps_().setProperty('tg_chat', chat);
+  if (!tgProps_().getProperty('tg_chat')) { Logger.log('❌ Bot nije dobio poruku. Pošalji mu /start pa pokreni ponovno.'); return; }
+  tg_('✅ Povezano! 🎬 Novi upit (proba)'); Logger.log('✅ Poslano.');
+}
+
 // ===== E-MAIL PREDLOŠCI (tablični HTML, radi u Gmailu, Outlooku i na mobitelu) =====
 const MAIL_HEADER = WEB + 'mail-header.jpg';
 const WA = '385913584122';
@@ -286,4 +343,4 @@ function obavijest_(d, tablicaUrl) {
 function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 
 // Pokreni jednom ručno (▶ Run) da Google zatraži dozvole za tablicu i mail.
-function odobriDozvole() { sheet_(); MailApp.getRemainingDailyQuota(); CalendarApp.getDefaultCalendar().getName(); Logger.log('Tablica: ' + ss_().getUrl()); }
+function odobriDozvole() { sheet_(); MailApp.getRemainingDailyQuota(); CalendarApp.getDefaultCalendar().getName(); try { UrlFetchApp.fetch('https://api.telegram.org', { muteHttpExceptions: true }); } catch (e) {} Logger.log('Tablica: ' + ss_().getUrl()); }
